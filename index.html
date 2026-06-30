@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商家退保 AI 审核系统</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --border: #e2e2e4;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #999;
+  --accent: #2563eb;
+  --accent-light: #eff6ff;
+  --success: #16a34a;
+  --success-bg: #f0fdf4;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --info: #0891b2;
+  --info-bg: #ecfeff;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+  --transition: 0.2s ease;
+}
+
+/* ── Phone Demo Wrapper ── */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.phone-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Phone Body (iPhone 15 Pro Max) ── */
+.phone-body {
+  position: relative;
+  width: 430px;
+  min-width: 430px;
+  height: 932px;
+  background: #0a0a0a;
+  border-radius: 48px;
+  box-shadow:
+    0 0 0 2px #1f1f1f,
+    0 0 0 5px #0a0a0a,
+    0 0 0 6px #2a2a2a,
+    0 20px 60px rgba(0,0,0,0.5),
+    0 8px 24px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* Status Bar */
+.phone-status-bar {
+  height: 54px;
+  padding: 14px 30px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.phone-status-bar .time { flex: 1; }
+.phone-status-bar .icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.phone-status-bar .icons svg { width: 16px; height: 16px; }
+
+/* Dynamic Island */
+.phone-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 34px;
+  background: #0a0a0a;
+  border-radius: 20px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ── Phone Screen (app viewport, main scroll container) ── */
+.phone-screen {
+  flex: 1;
+  background: var(--bg);
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  border-radius: 0 0 44px 44px;
+  -webkit-overflow-scrolling: touch;
+}
+.phone-screen::-webkit-scrollbar { width: 0; }
+
+/* Home Indicator */
+.phone-home-bar {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 100px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 50;
+}
+.header h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.badge-active { background: var(--success-bg); color: var(--success); }
+.badge-inactive { background: var(--danger-bg); color: var(--danger); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.tab {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: var(--transition);
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Content Area ── */
+.content {
+  padding: 10px 14px 24px;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Decision Tree ── */
+.tree-container { display: flex; flex-direction: column; gap: 10px; }
+.tree-level { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.tree-stage-label { width: 100%; text-align: center; font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-bottom: 2px; }
+.tree-node {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 110px;
+  text-align: center;
+  flex: 1;
+  max-width: 200px;
+}
+.tree-node:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+.tree-node.selected { border-color: var(--accent); background: var(--accent-light); }
+.tree-node .node-label { font-size: 12px; font-weight: 500; }
+.tree-node .node-sub { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+.tree-arrow {
+  display: flex;
+  justify-content: center;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  line-height: 1;
+}
+.result-card {
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-top: 12px;
+}
+.result-card h4 { font-size: 13px; margin-bottom: 6px; color: var(--accent); }
+.result-card .result-row { font-size: 12px; margin: 3px 0; color: var(--text-secondary); }
+.result-card .result-row strong { color: var(--text); }
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 2px;
+}
+.tag-auto { background: var(--success-bg); color: var(--success); }
+.tag-review { background: var(--warning-bg); color: var(--warning); }
+.tag-danger { background: var(--danger-bg); color: var(--danger); }
+
+/* ── Forms ── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.form-group.full { grid-column: 1 / -1; }
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.form-group input, .form-group select, .form-group textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  transition: var(--transition);
+  background: var(--surface);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.form-group input.error, .form-group select.error {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+.form-group textarea { resize: vertical; min-height: 60px; }
+
+/* ── Buttons ── */
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #15803d; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: #b91c1c; }
+.btn-outline {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-group { display: flex; gap: 6px; margin-top: 12px; }
+
+/* ── AI Pre-Review Panel ── */
+.pre-review { margin-top: 16px; }
+.pre-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+}
+.pre-review-body { margin-top: 6px; display: none; }
+.pre-review-body.open { display: block; }
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+}
+.check-item:last-child { border-bottom: none; margin-bottom: 0; }
+.check-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.check-pass { color: var(--success); }
+.check-warn { color: var(--warning); }
+.check-fail { color: var(--danger); }
+.check-info { color: var(--info); }
+.check-loading .check-icon { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Review Panel ── */
+.review-split {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.review-info p { font-size: 12px; margin: 4px 0; color: var(--text-secondary); }
+.review-info p strong { color: var(--text); font-weight: 500; }
+.review-highlight { color: var(--danger); background: var(--danger-bg); padding: 1px 3px; border-radius: 2px; }
+
+/* ── AI Opinion Block ── */
+.ai-opinion {
+  background: var(--info-bg);
+  border: 1px solid var(--info);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.ai-opinion h4 { font-size: 13px; margin-bottom: 10px; color: var(--info); }
+.ai-opinion .opinion-row { font-size: 12px; margin: 4px 0; }
+.ai-opinion .opinion-pass { color: var(--success); }
+.ai-opinion .opinion-fail { color: var(--danger); }
+.ai-opinion .opinion-warn { color: var(--warning); }
+.ai-opinion .confidence { font-size: 10px; color: var(--text-tertiary); margin-top: 8px; }
+
+/* ── File Upload Component ── */
+.file-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+.file-upload-item {
+  position: relative;
+  border: 2px dashed #d0d5dd;
+  border-radius: 8px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fafbfc;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.file-upload-item:hover { border-color: var(--accent); background: #f0f5ff; }
+.file-upload-item.has-file {
+  border-style: solid;
+  border-color: var(--success);
+  background: #f0fdf4;
+  padding: 6px;
+}
+.file-upload-item.has-file:hover { border-color: var(--danger); background: #fef2f2; }
+.file-upload-item input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+.fu-icon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+.file-upload-item.has-file .fu-icon { color: var(--success); }
+.file-upload-item:hover .fu-icon { color: var(--accent); }
+.file-upload-item.has-file:hover .fu-icon { color: var(--danger); }
+.fu-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  text-align: center;
+  word-break: break-all;
+}
+.file-upload-item .fu-filename {
+  font-size: 10px;
+  color: var(--success);
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 16px;
+}
+.file-upload-item .fu-delete-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0;
+  z-index: 3;
+}
+.file-upload-item.has-file .fu-delete-btn { display: flex; }
+.file-upload-item .fu-delete-btn:hover { background: #b91c1c; transform: scale(1.15); }
+.fu-hint {
+  font-size: 9px;
+  color: #9ca3af;
+  margin-top: 2px;
+  text-align: center;
+}
+.file-upload-item.has-file .fu-hint { color: #86efac; }
+.file-upload-item:hover.has-file .fu-hint { color: var(--danger); }
+
+/* Signature check grid */
+.sig-check-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.sig-check-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #f5f7fa;
+  transition: background 0.15s;
+}
+.sig-check-item:hover { background: #ebedf0; }
+.sig-check-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Feishu Card ── */
+.feishu-card {
+  background: #ffffff;
+  border: 1px solid #e5e6eb;
+  border-radius: 8px;
+  padding: 0;
+  max-width: 100%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  font-size: 12px;
+  overflow: hidden;
+}
+.feishu-card-header {
+  background: #f5f6f8;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid #e5e6eb;
+}
+.feishu-card-body { padding: 10px 14px; }
+.feishu-card-body .fc-row { margin: 5px 0; color: #646a73; }
+.feishu-card-body .fc-row strong { color: #1f2329; }
+.feishu-card-body .fc-highlight { color: #c74343; background: #fff5f5; padding: 2px 4px; border-radius: 2px; }
+.feishu-card-footer {
+  padding: 8px 14px;
+  border-top: 1px solid #e5e6eb;
+  display: flex;
+  gap: 6px;
+}
+.fc-btn {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid #e5e6eb;
+  background: #fff;
+}
+.fc-btn.primary { background: #3370ff; border-color: #3370ff; color: #fff; }
+.fc-btn.danger { background: #f54a4a; border-color: #f54a4a; color: #fff; }
+
+.cards-grid { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Settings Modal (within phone screen) ── */
+.modal-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 22px;
+  width: 380px;
+  max-width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+.modal h2 { font-size: 15px; margin-bottom: 6px; }
+.modal p { font-size: 11px; color: var(--text-secondary); margin-bottom: 16px; }
+.modal p a { color: var(--accent); word-break: break-all; }
+.modal-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 16px; }
+
+/* ── Submit Confirm Modal ── */
+.confirm-modal {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 24px 20px 20px;
+  width: 320px;
+  max-width: 100%;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.confirm-modal .cm-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+.confirm-modal .cm-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.confirm-modal .cm-body {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.confirm-modal .cm-actions {
+  display: flex;
+  gap: 8px;
+}
+.confirm-modal .cm-actions .btn {
+  flex: 1;
+  justify-content: center;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+/* ── Agent Pipeline Status ── */
+.agent-pipeline {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.agent-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+.agent-card .agent-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.agent-card .agent-dot.pending { background: #d1d5db; }
+.agent-card .agent-dot.running { background: #2563eb; animation: pulse 1s ease-in-out infinite; }
+.agent-card .agent-dot.done { background: #16a34a; }
+.agent-card .agent-dot.error { background: #dc2626; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+.agent-card .agent-info { flex: 1; min-width: 0; }
+.agent-card .agent-info .agent-name { font-weight: 600; font-size: 11px; color: #1d1d1f; }
+.agent-card .agent-info .agent-status-text { font-size: 10px; color: #6b7280; margin-top: 1px; }
+.agent-card .agent-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.agent-badge.pending { background: #f3f4f6; color: #9ca3af; }
+.agent-badge.running { background: #eff6ff; color: #2563eb; }
+.agent-badge.done { background: #f0fdf4; color: #16a34a; }
+.agent-badge.error { background: #fef2f2; color: #dc2626; }
+
+/* Agent color theming */
+.agent-card.agent-1 { border-left: 3px solid #16a34a; }  /* green */
+.agent-card.agent-2 { border-left: 3px solid #dc2626; }  /* red */
+.agent-card.agent-3 { border-left: 3px solid #d97706; }  /* yellow */
+.agent-card.agent-4 { border-left: 3px solid #7c3aed; }  /* purple */
+.agent-card.agent-1.active { background: #f0fdf4; border-color: #bbf7d0; }
+.agent-card.agent-2.active { background: #fef2f2; border-color: #fecaca; }
+.agent-card.agent-3.active { background: #fffbeb; border-color: #fde68a; }
+.agent-card.agent-4.active { background: #f5f3ff; border-color: #ddd6fe; }
+
+/* ── Toast (within phone screen) ── */
+.toast {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 300;
+  animation: slideUp 0.3s ease;
+  box-shadow: var(--shadow-lg);
+  white-space: nowrap;
+}
+.toast.success { background: #166534; color: white; }
+.toast.error { background: #991b1b; color: white; }
+@keyframes slideUp {
+  from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="phone-demo">
+  <div class="phone-body">
+    <!-- Dynamic Island -->
+    <div class="phone-island"></div>
+
+    <!-- Phone Screen -->
+    <div class="phone-screen" id="phoneScreen">
+
+      <!-- Status Bar -->
+      <div class="phone-status-bar">
+        <span class="time">9:41</span>
+        <span class="icons">
+          <svg viewBox="0 0 18 12"><path fill="none" stroke="#fff" stroke-width="1.5" d="M1 4.5L3.5 7l3-3m4 0L13 7l3-3"/></svg>
+          <svg viewBox="0 0 22 12"><rect x="0" y="0" width="18" height="12" rx="2" stroke="#fff" stroke-width="1.2" fill="none"/><rect x="19" y="3" width="2.5" height="6" rx="0.8" fill="#fff"/></svg>
+        </span>
+      </div>
+
+      <!-- Header -->
+      <div class="header">
+        <h1 id="pageTitle">商家退保 AI 审核</h1>
+        <div class="header-right">
+          <span id="aiStatus" class="badge badge-inactive">AI 未连接</span>
+          <button class="btn btn-outline btn-sm" onclick="openSettings()">设置</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('scenario')">场景决策树</button>
+        <button class="tab" onclick="switchTab('submit')">商家提交 & AI预审</button>
+        <button class="tab" onclick="switchTab('review')">人工审核</button>
+        <button class="tab" onclick="switchTab('feishu')">流程失败通知</button>
+        <button class="tab" onclick="switchTab('summary')">当日审批汇总</button>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+
+      <!-- Tab 1: Scenario Decision Tree -->
+      <div id="tab-scenario" class="tab-content active">
+        <div class="card">
+          <div class="card-title">退保场景决策树 — 点击选择各维度</div>
+          <div class="tree-container" id="treeContainer">
+            <div class="tree-stage-label">维度一：绑卡状态</div>
+            <div class="tree-level" id="tree-bindcard">
+              <div class="tree-node" data-key="bound" data-level="bind" onclick="selectNode(this)">
+                <div class="node-label">已绑卡</div>
+                <div class="node-sub">对公银行卡已绑定</div>
+              </div>
+              <div class="tree-node" data-key="unbound" data-level="bind" onclick="selectNode(this)">
+                <div class="node-label">未绑卡</div>
+                <div class="node-sub">未绑定对公卡</div>
+              </div>
+            </div>
+            <div class="tree-stage-label">维度二：商家类型</div>
+            <div class="tree-level" id="tree-type">
+              <div class="tree-node" data-key="company" data-level="type" onclick="selectNode(this)">
+                <div class="node-label">单个公司 / 总公司</div>
+                <div class="node-sub">企业主体</div>
+              </div>
+              <div class="tree-node" data-key="individual" data-level="type" onclick="selectNode(this)">
+                <div class="node-label">个体工商户</div>
+                <div class="node-sub">个人经营</div>
+              </div>
+            </div>
+            <div class="tree-stage-label">维度三：经营资质状态</div>
+            <div class="tree-level" id="tree-license">
+              <div class="tree-node" data-key="active" data-level="license" onclick="selectNode(this)">
+                <div class="node-label">经营资质未注销</div>
+                <div class="node-sub">营业执照正常</div>
+              </div>
+              <div class="tree-node" data-key="deregistered" data-level="license" onclick="selectNode(this)">
+                <div class="node-label">经营资质已注销</div>
+                <div class="node-sub">营业执照注销</div>
+              </div>
+            </div>
+            <div class="tree-stage-label">维度四：对公卡状态</div>
+            <div class="tree-level" id="tree-card">
+              <div class="tree-node" data-key="normal" data-level="card" onclick="selectNode(this)">
+                <div class="node-label">正常使用</div>
+                <div class="node-sub">未注销</div>
+              </div>
+              <div class="tree-node" data-key="deregistered" data-level="card" onclick="selectNode(this)">
+                <div class="node-label">已注销</div>
+                <div class="node-sub"></div>
+              </div>
+              <div class="tree-node" data-key="unavailable" data-level="card" onclick="selectNode(this)">
+                <div class="node-label">未办理/无法使用</div>
+                <div class="node-sub"></div>
+              </div>
+            </div>
+          </div>
+          <div id="scenarioResult"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Merchant Submission -->
+      <div id="tab-submit" class="tab-content">
+        <div class="card" style="margin-bottom:12px">
+          <div class="card-title">商家退保申请信息</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>商家名称</label>
+              <input type="text" id="f-merchantName" placeholder="请输入商家名称" value="星辰科技有限公司">
+            </div>
+            <div class="form-group">
+              <label>统一社会信用代码</label>
+              <input type="text" id="f-creditCode" placeholder="18位统一社会信用代码" value="91110108MA01XXXXX">
+            </div>
+            <div class="form-group">
+              <label>绑卡状态</label>
+              <select id="f-bindStatus">
+                <option value="bound">已绑卡</option>
+                <option value="unbound">未绑卡</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>商家类型</label>
+              <select id="f-merchantType">
+                <option value="company">单个公司 / 总公司</option>
+                <option value="individual">个体工商户</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-top:12px">
+            <div class="form-group">
+              <label>退保金额（可退余额）</label>
+              <div id="f-refundAmount" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:15px;font-weight:700;color:#1d1d1f;background:#f9fafb">¥5,000.00</div>
+            </div>
+            <div class="form-group">
+              <label>收款账户类型</label>
+              <select id="f-accountType">
+                <option value="bound_card">绑定对公卡</option>
+                <option value="legal_rep">个人法人卡</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>银行卡号</label>
+              <input type="text" id="f-bankCard" placeholder="银行卡号" value="6222021234567890">
+            </div>
+            <div class="form-group">
+              <label>开户行</label>
+              <input type="text" id="f-bankName" placeholder="开户银行名称" value="中国工商银行北京分行">
+            </div>
+            <div class="form-group">
+              <label>经营资质状态</label>
+              <select id="f-licenseStatus">
+                <option value="active">未注销</option>
+                <option value="deregistered" selected>已注销</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>对公卡状态</label>
+              <select id="f-cardStatus">
+                <option value="normal">正常使用</option>
+                <option value="deregistered" selected>已注销</option>
+                <option value="unavailable">未办理/无法使用</option>
+              </select>
+            </div>
+          </div>
+
+
+          <div class="form-group full" style="margin-top:14px">
+            <label>材料上传 <span style="font-size:10px;color:var(--text-tertiary);font-weight:400">（支持 JPG / PNG / PDF，单文件≤10MB）</span></label>
+              <div class="file-upload-grid" id="fileUploadGrid">
+                <!-- 营业执照注销证明 -->
+                <div class="file-upload-item" id="fu-cert" onclick="void(0)">
+                  <input type="file" accept=".jpg,.jpeg,.png,.pdf" data-field="cert" onchange="handleFileUpload(this, 'fu-cert')">
+                  <svg class="fu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+      <div class="fu-label">营业执照注销证明 <span style="color:var(--success);display:none" class="upload-ok">✅</span></div>
+                  <span class="fu-hint">点击上传</span>
+                  <button class="fu-delete-btn" title="删除文件" onclick="event.stopPropagation();removeFile('fu-cert')">✕</button>
+                  <span class="fu-filename"></span>
+                </div>
+                <!-- 退款申请函 -->
+                <div class="file-upload-item" id="fu-letter" onclick="void(0)">
+                  <input type="file" accept=".jpg,.jpeg,.png,.pdf" data-field="letter" onchange="handleFileUpload(this, 'fu-letter')">
+                  <svg class="fu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <span class="fu-label">退款申请函</span>
+                  <span class="fu-hint">点击上传</span>
+                  <button class="fu-delete-btn" title="删除文件" onclick="event.stopPropagation();removeFile('fu-letter')">✕</button>
+                  <span class="fu-filename"></span>
+                </div>
+              </div>
+              <!-- AI 审核结果（上传后自动触发，直接展示在此处） -->
+              <div id="aiResultSection" style="margin-top:12px;display:none">
+                <div id="aiResultHeader" style="font-size:12px;font-weight:600;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">
+                  <span id="aiResultTitle">AI 审核结果</span>
+                </div>
+                <!-- 4-Agent Pipeline Status -->
+                <div class="agent-pipeline" id="agentPipeline">
+                  <div class="agent-card agent-1" id="agentCard1">
+                    <div class="agent-dot pending" id="agentDot1"></div>
+                    <div class="agent-info">
+                      <div class="agent-name">🟢 AI材料审核员</div>
+                      <div class="agent-status-text" id="agentStatus1">等待中</div>
+                    </div>
+                    <span class="agent-badge pending" id="agentBadge1">待执行</span>
+                  </div>
+                  <div class="agent-card agent-3" id="agentCard3">
+                    <div class="agent-dot pending" id="agentDot3"></div>
+                    <div class="agent-info">
+                      <div class="agent-name">🟡 AI工商信息核对员</div>
+                      <div class="agent-status-text" id="agentStatus3">等待中</div>
+                    </div>
+                    <span class="agent-badge pending" id="agentBadge3">待执行</span>
+                  </div>
+                  <!-- 消息触达机器人: 后台静默运行，不展示 UI -->
+                  <div class="agent-card agent-4" id="agentCard4" style="display:none">
+                    <div class="agent-dot pending" id="agentDot4"></div>
+                    <div class="agent-info">
+                      <div class="agent-name">🟣 消息触达机器人</div>
+                      <div class="agent-status-text" id="agentStatus4">等待中</div>
+                    </div>
+                    <span class="agent-badge pending" id="agentBadge4">待执行</span>
+                  </div>
+                </div>
+                <div id="aiResultChecks"></div>
+              </div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btnSubmit" disabled onclick="handleSubmitClick()">提交审核</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Human Review -->
+      <div id="tab-review" class="tab-content">
+        <div class="card" id="reviewCombinedCard">
+          <div class="card-title">退保审核</div>
+          <div id="reviewCombinedContent">
+            <p style="color:var(--text-tertiary);font-size:12px">请先在"商家提交"页面填写信息并执行 AI 预审</p>
+          </div>
+        </div>
+        <div class="btn-group" style="justify-content:flex-end;padding-bottom:8px">
+          <button class="btn btn-success" onclick="handleApprove()">通过</button>
+          <button class="btn btn-danger" onclick="handleReject()">驳回</button>
+        </div>
+      </div>
+
+      <!-- Tab 4: 流程失败通知（商家退保审批群） -->
+      <div id="tab-feishu" class="tab-content">
+        <!-- 动态卡片区域：人审完成后 JS 填充 -->
+        <div id="feishuCardsContainer">
+          <!-- 默认展示：打款失败通知样例 -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="feishu-card">
+              <div class="feishu-card-header">流程失败通知（商家退保审批群） - 打款失败</div>
+              <div class="feishu-card-body">
+                <div class="fc-row">审批单号：MB-20260620-001234</div>
+                <div class="fc-row">商家名称：星辰科技有限公司</div>
+                <div class="fc-row">退保金额：¥5,000.00</div>
+                <div class="fc-row">失败时间：2026-06-20 15:45</div>
+                <div class="fc-row" style="margin-top:8px"><strong>失败原因：</strong><span class="fc-highlight">财经打款失败 > 银行卡信息错误</span></div>
+                <div class="fc-row"><strong>具体原因：</strong>开户行信息与银行卡号不匹配</div>
+                <div class="fc-row" style="margin-top:8px;background:#f5f6f8;padding:8px;border-radius:4px">
+                  <strong>AI 解析：</strong>提交账户开户行为"中国工商银行北京分行"，但银行卡号(6222021234567890)为农业银行账户。银行卡信息填写错误导致打款失败。
+                </div>
+              </div>
+              <div class="feishu-card-footer">
+                <button class="fc-btn primary">修改账户信息</button>
+                <button class="fc-btn">联系商家</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Tab 5: 当日审批汇总 -->
+        <div id="tab-summary" class="tab-content">
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-title">📊 当日审批汇总</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+              每日北京时间 22:00 自动汇总推送到群，间隔 24 小时。
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:11px;color:var(--text-tertiary)">汇总时间配置：</span>
+              <input type="time" id="cfgSummaryTime" value="22:00" style="padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px">
+              <span style="font-size:11px;color:var(--text-tertiary)">（北京时间，每日定时）</span>
+              <button class="btn btn-sm btn-outline" onclick="triggerSummaryNow()">立即触发汇总</button>
+              <button class="btn btn-sm btn-outline" onclick="clearDailyRecords()">清空当日记录</button>
+            </div>
+          </div>
+
+          <!-- 汇总卡片 -->
+          <div id="summaryCardContainer" style="display:none">
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-title">📨 汇总卡片</div>
+              <div id="summaryCardPreview"></div>
+            </div>
+          </div>
+
+          <!-- 当日记录列表 -->
+          <div class="card">
+            <div class="card-title">📋 当日审批记录</div>
+            <div id="dailyRecordsList" style="font-size:12px;color:var(--text-tertiary);padding:20px;text-align:center">
+              暂无记录，人审完成后自动录入
+            </div>
+          </div>
+        </div>
+
+      </div><!-- .content -->
+
+      <!-- Settings Modal (within phone screen, positioned absolute) -->
+      <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+          <h2>通义千问 API 设置</h2>
+          <p>输入阿里百炼 API Key 以启用 AI 审核能力。<br>免费获取：<a href="https://bailian.console.aliyun.com/#/api-key" target="_blank">bailian.console.aliyun.com</a></p>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" id="s-apikey" placeholder="sk-..." style="font-family:monospace;font-size:13px">
+          </div>
+          <div class="form-group">
+            <label>模型</label>
+            <select id="s-model">
+              <option value="qwen-turbo">千问 Turbo (qwen-turbo) - 免费</option>
+              <option value="qwen-plus">千问 Plus (qwen-plus)</option>
+              <option value="qwen-max">千问 Max (qwen-max)</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-outline" onclick="testConnection()">验证连接</button>
+            <button class="btn btn-primary" onclick="saveSettings()">保存</button>
+            <button class="btn btn-outline" onclick="closeSettings()">取消</button>
+          </div>
+          <div id="settingsResult" style="margin-top:10px;font-size:12px"></div>
+        </div>
+      </div>
+
+      <!-- Submit Confirm Modal (AI not passed) -->
+      <div class="modal-overlay" id="submitConfirmModal">
+        <div class="confirm-modal">
+          <div class="cm-icon">⚠️</div>
+          <div class="cm-title">您提交的信息有误，请再次核对</div>
+          <div class="cm-body" id="submitConfirmDetail">AI 预审发现问题，建议修正后再提交。</div>
+          <div class="cm-actions">
+            <button class="btn btn-outline" onclick="closeSubmitConfirm()">返回查看</button>
+            <button class="btn btn-primary" onclick="doFinalSubmit()">仍然提交</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast (within phone screen) -->
+      <div id="toast" class="toast" style="display:none"></div>
+
+      <!-- Home Indicator -->
+      <div class="phone-home-bar"></div>
+
+    </div><!-- .phone-screen -->
+  </div><!-- .phone-body -->
+</div><!-- .phone-demo -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════
+const STORAGE_API_KEY = 'mwr_qwen_apikey';
+const STORAGE_MODEL = 'mwr_qwen_model';
+const DEFAULT_MODEL = 'qwen-turbo';
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const state = {
+  scenario: { bind: null, type: null, license: null, card: null },
+  preReviewResult: null,
+  confidenceResult: null,
+  reviewOpinion: null,
+  isChecking: false,
+  aiPassed: false,   // true=通过, false=未通过/未审核
+  reviewSubmitted: false,  // 商家是否已点击「提交审核」
+  _agent1Retried: false,
+  notificationData: null,
+  businessQueryResult: null,
+  // 当日审批记录（用于汇总）
+  dailyRecords: [],
+  // 汇总定时器 ID
+  summaryTimer: null,
+  // 汇总触发延迟（人审后 N ms，默认 10000 = 10s）
+  summaryDelayMs: 10000,
+};
+
+// ═══════════════════════════════════════════════════════
+// API PROXY FETCH (CORS-enabled)
+// ═══════════════════════════════════════════════════════
+const API_BASE = window.location.protocol === 'file:'
+  ? 'http://localhost:8766'
+  : window.location.origin;
+
+async function _postViaIframe(url, data) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 120000);
+
+  try {
+    const resp = await fetch(API_BASE + url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    const text = await resp.text();
+    if (!text) throw new Error('服务器返回空响应');
+    return JSON.parse(text);
+  } catch (e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') {
+      throw new Error('AI请求超时 (120s)。视觉分析耗时较长，请重试');
+    }
+    throw new Error('无法连接AI服务器 (端口8766)。请确保已启动: cd merchant-withdrawal-review && python3 server.py');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// AI API CALL
+// ═══════════════════════════════════════════════════════
+async function callQwenAI(systemPrompt, userMessage, temperature = 0.3, images = []) {
+  const apiKey = localStorage.getItem(STORAGE_API_KEY);
+  if (!apiKey) throw new Error('请先在设置中配置通义千问 API Key');
+
+  // 有图片时自动使用视觉模型
+  var model;
+  if (images.length > 0) {
+    model = 'qwen-vl-max';  // ⬅ 视觉模型
+  } else {
+    model = localStorage.getItem(STORAGE_MODEL) || DEFAULT_MODEL;
+  }
+
+  // 构建 messages
+  var messages = [];
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+
+  // 用户消息：有图用 multimodal，无图用纯文本
+  if (images.length > 0) {
+    var parts = [];
+    if (userMessage) {
+      parts.push({ type: 'text', text: userMessage });
+    }
+    for (var i = 0; i < images.length; i++) {
+      parts.push({ type: 'image_url', image_url: { url: images[i].url } });
+    }
+    messages.push({ role: 'user', content: parts });
+  } else {
+    messages.push({ role: 'user', content: userMessage });
+  }
+
+  const body = {
+    model: model,
+    messages: messages,
+    temperature: temperature,
+    max_tokens: 2048,
+    stream: false
+  };
+
+  const result = await _postViaIframe('/api/chat', {
+    provider: 'qwen',
+    apiKey: apiKey,
+    body: body
+  });
+
+  if (result.status !== 200) {
+    var errBody = result.body || {};
+    var errInfo = errBody.error || {};
+    var errMsg = errInfo.message || JSON.stringify(result.body).substring(0, 200);
+    throw new Error('API 错误(' + result.status + '): ' + errMsg);
+  }
+
+  var choices = (result.body && result.body.choices) || [];
+  var firstChoice = choices[0] || null;
+  var content = (firstChoice && firstChoice.message && firstChoice.message.content) || '';
+  if (!content) {
+    console.warn('[callQwenAI] empty content, raw:', JSON.stringify(result).substring(0, 300));
+    throw new Error('AI 返回了空内容，HTTP状态: ' + result.status);
+  }
+  return content;
+}
+
+// ═══════════════════════════════════════════════════════
+// SYSTEM PROMPTS — 4 Sub-Agent Pipeline
+// ═══════════════════════════════════════════════════════
+
+// ── AI材料审核员 (Green): 材料信息预审 ──
+function buildAgent1ReviewPrompt() {
+  return `你是商家退保审核 AI 助手（AI材料审核员）。你是一个视觉模型，可以查看商家上传的证件图片内容。
+
+你的核心职责：对商家提交的退保材料进行预审，分析图片中的字段信息，查询内置审核标准，进行逐项对比，输出审核结果（通过/警告/不通过）及原因。
+
+✅ 你可以做的事情：
+- 查看上传的两张图片（图1 = 营业执照注销证明，图2 = 退款申请函）
+- 识别图片中的文字、公章、签字、手印、日期等关键信息
+- 判断图片内容是否与标注的材料类型一致
+- 检查表单字段的完整性和一致性
+- 查询内置退保审核规则矩阵，匹配当前场景
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ 核心审核规则：两张图片审核标准不同，请严格区分
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 图1 — 营业执照注销证明
+
+唯一审核要点：**是否盖有公章（红色圆形/椭圆形官方印章）**
+
+审核标准：
+- ✅ 通过：图片中能清晰看到红色的圆形/椭圆形公章
+- ⚠️ 警告：图片模糊导致无法确认是否有公章
+- ❌ 不通过：图片中明显没有公章，或内容完全不是注销证明
+
+## 图2 — 退款申请函
+
+两个审核要点，缺一不可：**①是否填写姓名 ②是否签署日期**
+
+审核标准：
+- ✅ 通过：姓名和日期都清晰可见
+- ⚠️ 警告：姓名或日期不清晰
+- ❌ 不通过：姓名和日期都没有，或内容完全不是申请函
+
+## 退保规则场景矩阵（内置审核标准）
+
+### 场景一：营业执照已注销
+- 单个公司/总公司：材料→营业执照注销证明+退款申请函(全体股东+法定代表人签字按手印)+手持身份证照片
+- 个体工商户：材料→营业执照注销证明+退款申请函(经营者签字按手印)+手持身份证照片
+
+### 场景二：营业执照未注销+对公卡已注销
+- 单个公司/总公司：材料→对公账户注销证明+退款申请函(加盖公章)
+- 个体工商户：材料→退款申请函(经营者签字按手印)
+
+### 场景三：营业执照未注销+对公卡未办理/无法使用
+- 单个公司/总公司：材料→退款申请函(加盖公章)
+- 个体工商户：材料→退款申请函(经营者签字按手印)+手持身份证照片
+
+## 输出格式（必须是纯 JSON，不要任何额外文字）：
+{
+  "scenario": "场景标识字符串",
+  "needHumanReview": true,
+  "checks": [
+    {"dimension": "营业执照注销证明 - 公章", "status": "pass|warn|fail", "message": "公章检查结果", "details": "详细说明"},
+    {"dimension": "退款申请函 - 姓名", "status": "pass|warn|fail", "message": "姓名检查结果", "details": "详细说明"},
+    {"dimension": "退款申请函 - 日期", "status": "pass|warn|fail", "message": "日期检查结果", "details": "详细说明"},
+    {"dimension": "字段完整性", "status": "pass|warn|fail", "message": "表单字段完整性检查", "details": ""},
+    {"dimension": "账户类型匹配", "status": "pass|warn|fail", "message": "账户类型与场景匹配检查", "details": ""},
+    {"dimension": "材料一致性", "status": "pass|warn|fail", "message": "上传材料与场景需求对比", "details": ""}
+  ],
+  "summary": "整体预审结论",
+  "blockSubmit": false,
+  "suggestions": ["修正建议"]
+}
+
+关键：blockSubmit = true 当任何 checks.status === "fail" 或 "warn"`;
+}
+
+// ── AI审核结果评估专家 (Red): 复核审核结果并打分 ──
+function buildAgent2ConfidencePrompt(agent1Result) {
+  return `你是商家退保审核 AI 助手（AI审核结果评估专家）。
+
+你的核心职责：对 AI材料审核员 的预审结果进行置信度评估，从三个维度打分：
+1. **材料类型识别准确性** — AI材料审核员 是否正确识别了上传材料的类型
+2. **关键字提取准确性** — AI材料审核员 从图片中提取的关键信息（公章、姓名、日期）是否准确
+3. **合规评估准确性** — AI材料审核员 基于审核规则矩阵得出的结论是否合理
+
+## AI材料审核员 的审核结果：
+\`\`\`json
+${JSON.stringify(agent1Result, null, 2)}
+\`\`\`
+
+## 评估标准：
+- **高置信度 (high)**：三个维度全部准确，Agent 1 的判断无争议
+- **中置信度 (medium)**：1-2 个维度存在轻微偏差，但整体结论可信
+- **低置信度 (low)**：至少 1 个维度存在明显错误或遗漏，建议重新审核
+
+## 输出格式（必须是纯 JSON）：
+{
+  "confidence": "high|medium|low",
+  "scores": {
+    "materialTypeAccuracy": {"score": 0-100, "comment": "评价"},
+    "keywordExtractionAccuracy": {"score": 0-100, "comment": "评价"},
+    "complianceAssessmentAccuracy": {"score": 0-100, "comment": "评价"}
+  },
+  "overallScore": 0-100,
+  "needRetry": false,
+  "retryReason": "",
+  "finalChecks": [],  // 如果置信度高/中，可对 Agent 1 结果做微调
+  "finalSummary": ""
+}`;
+}
+
+// ── 消息触达机器人 (Purple): 推送消息通知 ──
+function buildAgent3NotifyPrompt(finalResult) {
+  return `你是商家退保审核 AI 助手（消息触达机器人）。
+
+你的核心职责：根据审核结果，生成一条可推送到飞书/企微/钉钉等聊天应用的通知消息。消息内容应根据审核场景自动适配，无需指定具体推送目标。
+
+## 当前审核结果：
+\`\`\`json
+${JSON.stringify(finalResult, null, 2)}
+\`\`\`
+
+## 输出格式（必须是纯 JSON）：
+{
+  "notificationType": "feishu|wecom|dingtalk|generic",
+  "title": "通知标题",
+  "content": {
+    "summary": "简要总结",
+    "keyFindings": ["关键发现1", "关键发现2"],
+    "actionRequired": "需要执行的操作",
+    "priority": "high|medium|low"
+  },
+  "templateData": {
+    "cardTitle": "飞书卡片标题",
+    "cardBody": "卡片正文（支持 markdown）",
+    "buttons": [
+      {"text": "按钮文字", "type": "primary|default|danger", "action": "操作说明"}
+    ]
+  }
+}`;
+}
+
+// ── AI工商信息核对员 (Yellow): 企查查 MCP 工商信息查询 ──
+function buildAgent4QueryPrompt(merchantName, creditCode) {
+  return `你是商家退保审核 AI 助手（AI工商信息核对员）。
+
+你的核心职责：根据商家名称和统一社会信用代码，生成工商信息查询的关键词和查询策略，用于在爱企查、企查查等平台查询该商家的工商注册信息。
+
+## 查询目标：
+- 商家名称：${merchantName}
+- 统一社会信用代码：${creditCode}
+
+## 需要查询的信息：
+1. 企业工商注册状态（存续/注销/吊销）
+2. 法定代表人信息
+3. 注册资本、成立日期
+4. 经营范围
+5. 经营异常/行政处罚记录
+6. 股东信息
+
+## 输出格式（必须是纯 JSON）：
+{
+  "queryKeywords": ["搜索关键词1", "搜索关键词2"],
+  "searchUrls": [
+    {"platform": "爱企查", "url": "https://aiqicha.baidu.com/s?q=关键词"},
+    {"platform": "企查查", "url": "https://www.qcc.com/web/search?key=关键词"},
+    {"platform": "天眼查", "url": "https://www.tianyancha.com/search?key=关键词"}
+  ],
+  "expectedInfo": {
+    "companyStatus": "预期状态",
+    "legalRepresentative": "预期法人",
+    "registrationCapital": "预期注册资本",
+    "establishDate": "预期成立日期"
+  },
+  "riskFlags": ["可能的风险点"]
+}`;
+}
+
+// ── (保留) 人工审核用 Prompt ──
+function buildReviewPrompt() {
+  return `你是商家退保审核 AI 助手。根据商家提交信息进行最终审核。
+
+审核维度：
+1. 材料完整性
+2. 材料合规性
+3. 收款账户类型合规性
+4. 金额一致性
+5. 资质状态一致性
+
+输出 JSON：
+{
+  "verdict": "pass|fail|need_manual",
+  "confidence": "high|medium|low",
+  "opinions": [
+    {"dimension": "审核维度", "result": "pass|fail|warn", "detail": "审核意见", "highlight": "需要标红的内容"}
+  ],
+  "summary": "总结",
+  "rejectReason": {"category": "驳回分类", "subCategory": "子分类", "detail": "具体原因"}
+}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// FILE UPLOAD HANDLER
+// ═══════════════════════════════════════════════════════
+const uploadedFiles = { cert: null, letter: null };
+const uploadedFileB64 = { cert: null, letter: null };  // base64 图片数据给视觉模型
+
+function readFileAsDataURL(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() { resolve(reader.result); };
+    reader.onerror = function() { reject(new Error('文件读取失败')); };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleFileUpload(input, containerId) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+  if (!validTypes.includes(file.type) && !/\.(jpg|jpeg|png|pdf)$/i.test(file.name)) {
+    showToast('仅支持 JPG / PNG / PDF 格式', 'error');
+    input.value = '';
+    return;
+  }
+
+  // Validate file size (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('文件大小不能超过 10MB', 'error');
+    input.value = '';
+    return;
+  }
+
+  const field = input.dataset.field;
+  uploadedFiles[field] = file;
+
+  // 先读取图片 base64（给视觉模型），再触发 AI 审核
+  uploadedFileB64[field] = null;
+  if (file.type !== 'application/pdf') {
+    try {
+      uploadedFileB64[field] = await readFileAsDataURL(file);
+      console.log('[MWR] base64 ready for', field, '- length:', uploadedFileB64[field].length);
+    } catch(err) {
+      console.warn('[MWR] base64 read failed for', field, err);
+    }
+  }
+
+  const container = document.getElementById(containerId);
+  container.classList.add('has-file');
+
+  const filenameEl = container.querySelector('.fu-filename');
+  const hintEl = container.querySelector('.fu-hint');
+
+  let displayName = file.name;
+  if (displayName.length > 16) {
+    const ext = displayName.slice(displayName.lastIndexOf('.'));
+    displayName = displayName.slice(0, 12) + '...' + ext;
+  }
+  filenameEl.textContent = displayName;
+  hintEl.textContent = formatFileSize(file.size);
+
+  const label = container.querySelector('.fu-label').textContent;
+  showToast(label + ' 上传成功', 'success');
+
+  // 检查是否需要触发 AI 审核
+  var bothReady = uploadedFiles.cert && uploadedFiles.letter;
+  checkAndTriggerAutoAI();
+  if (bothReady) {
+    showToast('两份文件已齐，正在触发 AI 审核...', 'success');
+  } else {
+    var missing = !uploadedFiles.cert ? '营业执照注销证明' : '退款申请函';
+    showToast('还缺「' + missing + '」，请继续上传', 'success');
+  }
+}
+
+function removeFile(containerId) {
+  var container = document.getElementById(containerId);
+  var input = container.querySelector('input[type="file"]');
+  var field = input.dataset.field;
+
+  uploadedFiles[field] = null;
+  uploadedFileB64[field] = null;
+  input.value = '';
+  container.classList.remove('has-file');
+  container.querySelector('.fu-filename').textContent = '';
+  container.querySelector('.fu-hint').textContent = '点击上传';
+
+  // 有文件被删除，重置 AI 审核状态
+  state.aiPassed = false;
+  state.preReviewResult = null;
+  state.confidenceResult = null;
+  updateSubmitBtn('idle');
+
+  // 隐藏 AI 结果区域
+  var resultSec = document.getElementById('aiResultSection');
+  if (resultSec) { resultSec.style.display = 'none'; }
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function getMaterialStatus() {
+  return {
+    cert: !!uploadedFiles.cert,
+    letter: !!uploadedFiles.letter,
+    certName: uploadedFiles.cert ? uploadedFiles.cert.name : '',
+    letterName: uploadedFiles.letter ? uploadedFiles.letter.name : '',
+    certType: uploadedFiles.cert ? uploadedFiles.cert.type : '',
+    letterType: uploadedFiles.letter ? uploadedFiles.letter.type : '',
+    certSizeKB: uploadedFiles.cert ? Math.round(uploadedFiles.cert.size / 1024) : 0,
+    letterSizeKB: uploadedFiles.letter ? Math.round(uploadedFiles.letter.size / 1024) : 0
+  };
+}
+
+// 检查两份文件是否均已上传（必须两份都传才触发 AI 审核）
+function checkAndTriggerAutoAI() {
+  if (uploadedFiles.cert && uploadedFiles.letter) {
+    runAgentPipeline();
+  } else {
+    updateSubmitBtn('idle');
+  }
+}
+
+// 更新提交按钮状态
+// status: 'idle' | 'checking' | 'passed' | 'failed'
+function updateSubmitBtn(status) {
+  const btn = document.getElementById('btnSubmit');
+  switch (status) {
+    case 'idle':
+      btn.disabled = true;
+      btn.style.background = '';
+      btn.style.cursor = '';
+      btn.textContent = '提交审核';
+      btn.className = 'btn btn-primary';
+      btn.disabled = true;
+      break;
+    case 'checking':
+      btn.disabled = true;
+      btn.style.cursor = 'not-allowed';
+      btn.textContent = 'AI 审核中...';
+      btn.className = 'btn btn-primary';
+      break;
+    case 'passed':
+      btn.disabled = false;
+      btn.style.background = '';
+      btn.style.cursor = 'pointer';
+      btn.textContent = '提交审核';
+      btn.className = 'btn btn-success';
+      break;
+    case 'failed':
+      btn.disabled = false;
+      btn.style.background = '';
+      btn.style.cursor = 'pointer';
+      btn.textContent = '提交审核';
+      btn.className = 'btn btn-primary';
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SCENARIO TREE
+// ═══════════════════════════════════════════════════════
+// ================================================================
+// 提交审核（商家点击后，人工审核Tab才展示审核卡片）
+
+
+
+function selectNode(el) {
+  const level = el.dataset.level;
+  const key = el.dataset.key;
+  const siblings = el.parentElement.querySelectorAll('.tree-node');
+  siblings.forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  state.scenario[level] = key;
+  updateScenarioResult();
+}
+
+function updateScenarioResult() {
+  const s = state.scenario;
+  const div = document.getElementById('scenarioResult');
+  if (!s.bind || !s.type || !s.license || !s.card) {
+    div.innerHTML = '<p style="color:var(--text-tertiary);margin-top:12px">请选择全部四个维度查看对应的审核规则</p>';
+    return;
+  }
+
+  let needReview = true;
+  let scenarioLabel = '';
+  let backupCards = [];
+  let materials = [];
+  let letterRules = [];
+
+  if (s.bind === 'bound' && (s.card === 'normal' || s.card === 'unavailable')) {
+    needReview = false;
+    scenarioLabel = '已绑卡+对公卡可用 → 自动退款，无需人工审核';
+  } else if (s.bind === 'unbound' && s.license === 'active') {
+    needReview = false;
+    scenarioLabel = '未绑卡+经营资质正常 → 引导绑卡即可，无需审核';
+  }
+
+  if (needReview) {
+    if (s.license === 'deregistered') {
+      scenarioLabel = '营业执照已注销';
+      if (s.type === 'company') {
+        backupCards = ['股东卡', '法定代表人卡'];
+        materials = ['营业执照注销证明', '退款申请函（全体股东+法定代表人签字按手印）', '签署方手持身份证照片'];
+        letterRules = ['全体股东签字', '法定代表人签字', '按手印', '手持照片人数与签字人数匹配'];
+      } else {
+        backupCards = ['原主体经营者'];
+        materials = ['营业执照注销证明', '退款申请函（经营者签字按手印）', '经营者手持身份证照片'];
+        letterRules = ['经营者签字', '按手印'];
+      }
+    } else if (s.card === 'deregistered') {
+      scenarioLabel = '营业执照未注销+对公卡已注销';
+      if (s.type === 'company') {
+        backupCards = ['股东卡', '法定代表人卡'];
+        materials = ['对公账户注销证明', '退款申请函（加盖公章）'];
+        letterRules = ['公司公章'];
+      } else {
+        backupCards = ['个体户经营者', '同名对公卡'];
+        materials = ['退款申请函（经营者签字按手印）'];
+        letterRules = ['经营者签字', '按手印'];
+      }
+    } else {
+      scenarioLabel = '营业执照未注销+对公卡未办理/无法使用';
+      if (s.type === 'company') {
+        backupCards = ['同名对公账户', '法人卡'];
+        materials = ['退款申请函（加盖公章）'];
+        letterRules = ['公司公章'];
+      } else {
+        backupCards = ['原主体经营者'];
+        materials = ['退款申请函（经营者签字按手印）', '经营者手持身份证照片'];
+        letterRules = ['经营者签字', '按手印'];
+      }
+    }
+  }
+
+  let html = '<div class="result-card"><h4>场景分析结果</h4>';
+  html += '<div class="result-row"><strong>场景判断：</strong>' + scenarioLabel + '</div>';
+  html += '<div class="result-row"><strong>是否需要人审：</strong>' +
+    (needReview ? '<span class="tag tag-review">需要人工审核</span>' : '<span class="tag tag-auto">无需人审</span>') + '</div>';
+
+  if (needReview) {
+    html += '<div class="result-row"><strong>可选收款账户：</strong>' + backupCards.map(c => '<span class="tag tag-auto">' + c + '</span>').join(' ') + '</div>';
+    html += '<div class="result-row"><strong>必需材料：</strong></div>';
+    html += '<ul style="margin:4px 0 0 16px;font-size:12px;color:var(--text-secondary)">';
+    materials.forEach(m => { html += '<li>' + m + '</li>'; });
+    html += '</ul>';
+    html += '<div class="result-row"><strong>退款函检查点：</strong>' + letterRules.map(r => '<span class="tag tag-review">' + r + '</span>').join(' ') + '</div>';
+
+    if (s.license === 'deregistered') {
+      if (s.type === 'company') {
+        html += '<div style="margin-top:8px;padding:8px;background:#fff5f5;border-radius:6px;font-size:11px;color:#c74343"><strong>问题反馈文案：</strong>"营业资质已注销，退款函需注销前的全体股东和原法定代表人XXX签字+按手印，请补充XXX"</div>';
+      } else {
+        html += '<div style="margin-top:8px;padding:8px;background:#fff5f5;border-radius:6px;font-size:11px;color:#c74343"><strong>问题反馈文案：</strong>"退款函需原经营者XXX签字+按手印，请补充XXX"</div>';
+      }
+    } else if (s.card === 'deregistered') {
+      if (s.type === 'company') {
+        html += '<div style="margin-top:8px;padding:8px;background:#fff5f5;border-radius:6px;font-size:11px;color:#c74343"><strong>问题反馈文案：</strong>"营业资质未注销，退款函需加盖公司公章，请补充"</div>';
+      } else {
+        html += '<div style="margin-top:8px;padding:8px;background:#fff5f5;border-radius:6px;font-size:11px;color:#c74343"><strong>问题反馈文案：</strong>"退款函需原经营者XXX签字+按手印，请补充XXX"</div>';
+      }
+    } else {
+      if (s.type === 'company') {
+        html += '<div style="margin-top:8px;padding:8px;background:#fff5f5;border-radius:6px;font-size:11px;color:#c74343"><strong>问题反馈文案：</strong>"退款函需加盖公司公章，请补充"</div>';
+      } else {
+        html += '<div style="margin-top:8px;padding:8px;background:#fff5f5;border-radius:6px;font-size:11px;color:#c74343"><strong>问题反馈文案：</strong>"退款函需原经营者XXX签字+按手印，请补充XXX"</div>';
+      }
+    }
+  }
+
+  html += '</div>';
+  div.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function getRefundAmount() {
+  var el = document.getElementById('f-refundAmount');
+  if (!el) return 5000;
+  var text = el.textContent || '';
+  var num = parseFloat(text.replace(/[^0-9.]/g, ''));
+  return isNaN(num) ? 5000 : num;
+}
+
+function getBalanceAmount() {
+  // 退保金额 = 可退余额（同一个值）
+  return getRefundAmount();
+}
+
+// ═══════════════════════════════════════════════════════
+// 4-SUB-AGENT PIPELINE ORCHESTRATOR
+// Replaces runAIPreCheck() with a sequential 4-agent pipeline
+// ═══════════════════════════════════════════════════════
+
+// ── Agent Status UI Helpers ──
+function updateAgentUI(agentNum, status, statusText) {
+  var dot = document.getElementById('agentDot' + agentNum);
+  var badge = document.getElementById('agentBadge' + agentNum);
+  var statusEl = document.getElementById('agentStatus' + agentNum);
+  var card = document.getElementById('agentCard' + agentNum);
+
+  // Agent card may not exist in DOM (e.g. Agent 2 hidden from merchant view)
+  if (!dot || !badge || !card) return;
+
+  // Reset all classes on dot
+  dot.className = 'agent-dot ' + status;
+  badge.className = 'agent-badge ' + status;
+  card.className = 'agent-card agent-' + agentNum;
+
+  var badgeTexts = { pending: '待执行', running: '执行中', done: '已完成', error: '出错' };
+  badge.textContent = badgeTexts[status] || status;
+  if (statusEl && statusText) {
+    statusEl.textContent = statusText;
+  }
+  if (status === 'running') {
+    card.classList.add('active');
+  }
+}
+
+function resetAllAgents() {
+  // Agent 2 (confidence) is hidden from merchant view — only agents 1, 3, 4 are shown
+  var visibleAgents = [1, 3, 4];
+  for (var i = 0; i < visibleAgents.length; i++) {
+    updateAgentUI(visibleAgents[i], 'pending', '等待中');
+  }
+}
+
+// ── Collect Form Data ──
+function collectFormData() {
+  return {
+    merchantName: (document.getElementById('f-merchantName') || {}).value || '',
+    creditCode: (document.getElementById('f-creditCode') || {}).value || '',
+    bindStatus: (document.getElementById('f-bindStatus') || {}).value || '',
+    merchantType: (document.getElementById('f-merchantType') || {}).value || '',
+    licenseStatus: (document.getElementById('f-licenseStatus') || {}).value || '',
+    cardStatus: (document.getElementById('f-cardStatus') || {}).value || '',
+    refundAmount: getRefundAmount(),
+    balance: getBalanceAmount(),
+    accountType: (document.getElementById('f-accountType') || {}).value || '',
+    bankCard: (document.getElementById('f-bankCard') || {}).value || '',
+    bankName: (document.getElementById('f-bankName') || {}).value || '',
+    materials: getMaterialStatus()
+  };
+}
+
+// ── Collect Images for Vision Model ──
+function collectImages() {
+  var images = [];
+  if (uploadedFileB64.cert) images.push({ url: uploadedFileB64.cert });
+  if (uploadedFileB64.letter) images.push({ url: uploadedFileB64.letter });
+  return images;
+}
+
+// ── Build user message for vision model ──
+function buildVisionUserMsg(formData, images) {
+  var msg = '以下是商家退保提交的表单数据：\n```json\n' + JSON.stringify(formData, null, 2) + '\n```\n';
+  if (images.length >= 2) {
+    msg += '\n📷 上传了两张图片：\n- 图1（第一张）= 营业执照注销证明\n- 图2（第二张）= 退款申请函';
+  } else if (images.length === 1) {
+    msg += '\n📷 上传了一张图片。如果是 cert → 图1 = 营业执照注销证明；如果是 letter → 图2 = 退款申请函。';
+  }
+  return msg;
+}
+
+// ── Parse AI JSON Response ──
+function parseAIResponse(raw, stepName) {
+  if (!raw || typeof raw !== 'string' || raw.trim() === '') {
+    throw new Error('[' + stepName + '] AI 返回了空内容');
+  }
+  var cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (e1) {
+    var jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try { return JSON.parse(jsonMatch[0]); }
+      catch (e2) { throw new Error('[' + stepName + '] JSON 解析失败: ' + raw.substring(0, 200)); }
+    }
+    throw new Error('[' + stepName + '] 返回内容不是有效 JSON: ' + raw.substring(0, 200));
+  }
+}
+
+// ── Sub AI材料审核员 (Green): 材料预审 ──
+async function runSubAgent1_Review(formData, images) {
+  updateAgentUI(1, 'running', '正在分析图片中的公章、姓名、日期...');
+  console.log('[AI材料审核员] Starting material pre-review...');
+
+  var userMsg = buildVisionUserMsg(formData, images);
+  var raw = await callQwenAI(buildAgent1ReviewPrompt(), userMsg, 0.2, images);
+  var result = parseAIResponse(raw, 'AI材料审核员');
+
+  console.log('[AI材料审核员] Review complete. Checks:', (result.checks || []).length, 'BlockSubmit:', result.blockSubmit);
+  return result;
+}
+
+// ── Sub AI审核结果评估专家 (Red): 置信度评估 ──
+async function runSubAgent2_Confidence(agent1Result) {
+  updateAgentUI(2, 'running', '正在评估 AI材料审核员 审核结果的置信度...');
+  console.log('[AI审核结果评估专家] Starting confidence evaluation...');
+
+  var systemPrompt = buildAgent2ConfidencePrompt(agent1Result);
+  var userMsg = '请对上述 Agent 1 的审核结果进行置信度评估，输出 JSON。';
+  var raw = await callQwenAI(systemPrompt, userMsg, 0.2, []);
+  var result = parseAIResponse(raw, 'AI审核结果评估专家');
+
+  console.log('[AI审核结果评估专家] Confidence:', result.confidence, 'OverallScore:', result.overallScore);
+
+  // 如果置信度低，触发重试 AI材料审核员（最多重试1次）
+  if (result.confidence === 'low' && !state._agent1Retried) {
+    console.log('[AI审核结果评估专家] Low confidence! Retrying AI材料审核员...');
+    state._agent1Retried = true;
+
+    updateAgentUI(1, 'running', '置信度低，正在重新审核...（重试）');
+    updateAgentUI(2, 'running', '等待 AI材料审核员 重试结果...');
+
+    // 重新调用 Agent 1
+    var formData = collectFormData();
+    var images = collectImages();
+    var retryResult = await runSubAgent1_Review(formData, images);
+
+    // 再次评估
+    updateAgentUI(2, 'running', '正在重新评估置信度...');
+    var retrySystemPrompt = buildAgent2ConfidencePrompt(retryResult);
+    var retryRaw = await callQwenAI(retrySystemPrompt, '请对重试后的审核结果再次进行置信度评估。', 0.2, []);
+    var retryEval = parseAIResponse(retryRaw, 'AI审核结果评估专家-retry');
+
+    console.log('[AI审核结果评估专家] Retry confidence:', retryEval.confidence);
+    return { confidence: retryEval.confidence, finalResult: retryResult, retried: true,
+             scores: retryEval.scores, overallScore: retryEval.overallScore,
+             needRetry: false, finalSummary: retryEval.finalSummary || retryResult.summary };
+  }
+
+  return { confidence: result.confidence, finalResult: agent1Result, retried: false,
+           scores: result.scores, overallScore: result.overallScore,
+           needRetry: result.needRetry || false, finalSummary: result.finalSummary || agent1Result.summary };
+}
+
+// ── Sub AI工商信息核对员 (Yellow): 企查查 MCP 工商信息查询 ──
+// v20260630b: Agent 3 = AI工商信息核对员，直接调用企查查 MCP
+async function runSubAgent3_QccQuery(merchantName, creditCode) {
+  updateAgentUI(3, 'running', '正在通过企查查 MCP 查询工商信息...');
+
+  try {
+    // 直接调用后端 /api/qcc/query，后端代理企查查 MCP
+    // 使用 API_BASE 确保在 file:// 协议下也能正确路由到后端
+    // 企查查 token 由服务端硬编码持有，前端无需传参
+    var resp = await fetch(API_BASE + '/api/qcc/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyName: merchantName,
+        creditCode: creditCode
+      })
+    });
+
+    if (!resp.ok) {
+      throw new Error('HTTP ' + resp.status);
+    }
+
+    var data = await resp.json();
+
+    // 构建结果对象（兼容现有 displayBusinessQueryResult 格式）
+    // 注意：不在此处调用 displayBusinessQueryResult()，由 Pipeline 最终渲染后统一插入
+    var queryResult = {
+      merchantName: data.companyName || merchantName,
+      creditCode: data.creditCode || creditCode,
+      isDeregistered: data.isDeregistered,
+      registrationStatus: data.registrationStatus || '',
+      legalRep: data.legalRep || '',
+      registeredCapital: data.registeredCapital || '',
+      establishDate: data.establishDate || '',
+      queryTime: data.queryTime || new Date().toLocaleString('zh-CN'),
+      source: data.source || '企查查 MCP',
+      platforms: [{
+        name: '企查查',
+        isDeregistered: data.isDeregistered,
+        detail: data.detail || (data.isDeregistered === true ? '已注销' : data.isDeregistered === false ? '在营' : '未知')
+      }]
+    };
+
+    // 注意：工商结果由 Pipeline 最终渲染后统一展示（displayBusinessQueryResult）
+    // 此处仅返回数据对象
+
+    var statusText = data.isDeregistered === true ? '已注销' :
+                     data.isDeregistered === false ? '未注销（在营）' : '状态未知';
+    updateAgentUI(3, 'done', '查询完成：' + statusText);
+    return queryResult;
+
+  } catch (e) {
+    console.error('[AI工商信息核对员] 调用失败:', e);
+    updateAgentUI(3, 'done', '查询失败：' + e.message);
+
+    // 降级：返回失败信息对象（由 Pipeline 统一展示）
+    return {
+      merchantName: merchantName,
+      creditCode: creditCode,
+      isDeregistered: null,
+      registrationStatus: '',
+      queryTime: new Date().toLocaleString('zh-CN'),
+      source: '企查查 MCP',
+      platforms: [{
+        name: '企查查',
+        isDeregistered: null,
+        detail: '查询失败：' + e.message
+      }]
+    };
+  }
+}
+
+// ── Sub 消息触达机器人 (Purple): 推送通知（通用配置，无具体推送目标）──
+async function runSubAgent4_Notify(agent2Result) {
+  updateAgentUI(4, 'running', '正在生成通知消息模板...');
+  console.log('[消息触达机器人] Generating notification...');
+
+  var payload = {
+    reviewResult: agent2Result.finalResult,
+    confidence: agent2Result.confidence,
+    overallScore: agent2Result.overallScore,
+    retried: agent2Result.retried || false
+  };
+
+  var systemPrompt = buildAgent3NotifyPrompt(payload);
+  var userMsg = '请根据上述审核结果，生成一条适合推送到聊天应用的通知消息。';
+  var raw = await callQwenAI(systemPrompt, userMsg, 0.3, []);
+  var result = parseAIResponse(raw, '消息触达机器人');
+
+  // 存储通知数据（后续可用于实际推送）
+  state.notificationData = result;
+  console.log('[消息触达机器人] Notification generated. Type:', result.notificationType);
+
+  return result;
+}
+
+// 显示工商查询结果 — v20260630d: 四场景 AI 复核结论
+// 商家选择 vs 企查查实况 → 一致=绿色确认 / 不一致=红色纠错
+function displayBusinessQueryResult(queryResult) {
+  var resultChecks = document.getElementById('aiResultChecks');
+  if (!resultChecks) return;
+
+  // ── 读取商家表单填报值 ──
+  var formLicense = document.getElementById('f-licenseStatus');
+  var formLicenseVal = formLicense ? formLicense.value : 'active'; // 'deregistered' | 'active'
+  var formMerchantName = document.getElementById('f-merchantName');
+  var merchantClaimedName = formMerchantName ? formMerchantName.value : '';
+
+  // ── 四场景判定 ──
+  // merchantClaimed: true=商家选了"已注销", false=商家选了"未注销"
+  // actualDeregistered: true=企查查返回已注销, false=企查查返回在营
+  var merchantClaimed = (formLicenseVal === 'deregistered');
+  var actualDeregistered = queryResult.isDeregistered; // true | false | null
+
+  var isMatch, mainText, cardColor, cardBg, iconPrefix;
+  if (actualDeregistered === null) {
+    // 查询失败/未知
+    isMatch = null;
+    mainText = 'AI工商信息核对员查询失败，无法验证工商状态';
+    cardColor = '#6b7280'; cardBg = '#f9fafb'; iconPrefix = '❓';
+  } else if (merchantClaimed && actualDeregistered) {
+    // 场景1: 商家选已注销 + 实际已注销 → 绿色 ✅
+    isMatch = true;
+    mainText = 'AI已复核，检测到当前公司的工商信息已注销。';
+    cardColor = '#16a34a'; cardBg = '#f0fdf4'; iconPrefix = '✅';
+  } else if (!merchantClaimed && !actualDeregistered) {
+    // 场景2: 商家选未注销 + 实际未注销 → 绿色 ✅
+    isMatch = true;
+    mainText = 'AI已复核，检测到当前公司的工商信息未注销。';
+    cardColor = '#16a34a'; cardBg = '#f0fdf4'; iconPrefix = '✅';
+  } else if (merchantClaimed && !actualDeregistered) {
+    // 场景3: 商家选已注销 + 实际未注销 → 红色 ⚠️ 纠错
+    isMatch = false;
+    mainText = 'AI已复核，检测到当前公司的工商信息未注销，请核对你选择的信息。';
+    cardColor = '#dc2626'; cardBg = '#fef2f2'; iconPrefix = '⚠️';
+  } else {
+    // 场景4: 商家选未注销 + 实际已注销 → 红色 ⚠️ 纠错
+    isMatch = false;
+    mainText = 'AI已复核，检测到当前公司的工商信息已注销，请核对你选择的信息。';
+    cardColor = '#dc2626'; cardBg = '#fef2f2'; iconPrefix = '⚠️';
+  }
+
+  // 工商状态文字
+  var actualStatusText = (actualDeregistered === true) ? '已注销' :
+                         (actualDeregistered === false) ? '未注销（在营）' : '未知';
+  var claimedText = merchantClaimed ? '已注销' : '未注销';
+
+  // ── 构建 HTML ──
+  var html = '<div style="margin-top:12px;padding:14px 16px;border-radius:10px;border:2px solid ' +
+    cardColor + ';background:' + cardBg + '">';
+
+  // 标题行
+  html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">';
+  html += '<span style="font-size:15px">' + iconPrefix + '</span>';
+  html += '<span style="font-size:13px;font-weight:700;color:' + cardColor + '">';
+  html += '🔍 AI工商信息核对（企查查）</span></div>';
+
+  // ── 核心：AI 复核结论（大字突出）──
+  html += '<div style="padding:10px 14px;border-radius:8px;background:' +
+    (isMatch ? 'rgba(22,163,74,0.08)' : isMatch === false ? 'rgba(220,38,38,0.06)' : 'rgba(107,114,128,0.05)') +
+    ';border-left:4px solid ' + cardColor + ';margin-bottom:10px">';
+  html += '<div style="font-size:14px;font-weight:600;color:' + cardColor + ';line-height:1.5">';
+  html += mainText;
+  html += '</div>';
+  html += '</div>';
+
+  // ── 比对详情 ──
+  html += '<div style="font-size:11px;color:#374151;line-height:1.8">';
+  html += '<div><strong>商家名称：</strong>' + (queryResult.merchantName || merchantClaimedName) + '</div>';
+  html += '<div><strong>统一社会信用代码：</strong>' + (queryResult.creditCode || '—') + '</div>';
+
+  // 比对表格
+  html += '<div style="display:flex;gap:12px;margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(0,0,0,0.03)">';
+  html += '<div style="flex:1"><div style="font-size:10px;color:#9ca3af;margin-bottom:2px">商家填报</div>';
+  html += '<span style="font-weight:600;color:#374151">' + claimedText + '</span></div>';
+  html += '<div style="display:flex;align-items:center;color:#9ca3af;font-size:14px">→</div>';
+  html += '<div style="flex:1"><div style="font-size:10px;color:#9ca3af;margin-bottom:2px">企查查实况</div>';
+  html += '<span style="font-weight:700;color:' + cardColor + '">' + actualStatusText + '</span></div>';
+  html += '<div style="flex:1;text-align:right"><div style="font-size:10px;color:#9ca3af;margin-bottom:2px">比对结果</div>';
+  html += '<span style="font-weight:700;' + (isMatch ? 'color:#16a34a' : isMatch === false ? 'color:#dc2626' : 'color:#6b7280') + '">';
+  html += (isMatch ? '✅ 一致' : isMatch === false ? '❌ 不一致' : '— 未知') + '</span></div>';
+  html += '</div>';
+
+  // 附加信息（法定代表人等）
+  if (queryResult.legalRep) {
+    html += '<div style="margin-top:4px"><strong>法定代表人：</strong>' + queryResult.legalRep + '</div>';
+  }
+  if (queryResult.registeredCapital) {
+    html += '<div><strong>注册资本：</strong>' + queryResult.registeredCapital + '</div>';
+  }
+  if (queryResult.registrationStatus) {
+    html += '<div><strong>登记状态原文：</strong><span style="color:#6b7280">' + queryResult.registrationStatus + '</span></div>';
+  }
+  html += '<div><strong>查询时间：</strong>' + (queryResult.queryTime || '') + '</div>';
+  html += '</div>'; // end font-size:11px block
+
+  html += '</div>'; // end outer card
+
+  // 插入到 AI 预审结果区域最前面
+  resultChecks.insertAdjacentHTML('afterbegin', html);
+
+  // 存储比对信息供人工审核 Tab3 使用
+  if (!queryResult._compatInfo) {
+    queryResult._compatInfo = {
+      licenseMatch: isMatch,
+      formLicenseVal: formLicenseVal,
+      merchantClaimed: merchantClaimed,
+      actualDeregistered: actualDeregistered,
+      mainText: mainText,
+      cardColor: cardColor,
+      isMatch: isMatch
+    };
+  }
+}
+
+// 睡眠函数
+function sleep(ms) {
+  return new Promise(function(resolve) { return setTimeout(resolve, ms); });
+}
+
+
+// ── Pipeline Orchestrator ──
+async function runAgentPipeline() {
+  // 防重入
+  if (state.isChecking) {
+    console.warn('[Pipeline] Already running, skipping');
+    return;
+  }
+
+  // ── DOM 元素获取 ──
+  var resultSec = document.getElementById('aiResultSection');
+  var resultChecks = document.getElementById('aiResultChecks');
+  var resultTitle = document.getElementById('aiResultTitle');
+
+  if (!resultSec || !resultChecks || !resultTitle) {
+    console.error('[Pipeline] CRITICAL: DOM elements not found!');
+    alert('页面组件异常，请刷新页面 (F5)');
+    return;
+  }
+
+  state.isChecking = true;
+  state.aiPassed = false;
+  state._agent1Retried = false;
+  updateSubmitBtn('checking');
+  resetAllAgents();
+
+  // 显示结果区域
+  resultSec.style.display = 'block';
+  resultSec.style.cssText =
+    'margin-top:12px !important;display:block !important;padding:14px !important;' +
+    'background:#ffffff !important;border:2px solid #2563eb !important;' +
+    'border-radius:10px !important;box-shadow:0 4px 12px rgba(37,99,235,0.15) !important;';
+
+  resultTitle.innerHTML = '<span style="color:#2563eb;font-weight:600;font-size:13px">🤖 4-Agent 审核流水线启动</span>';
+
+  try {
+    // ════════════════════════════════════════════════
+    // Step 1: 收集表单数据和图片
+    // ════════════════════════════════════════════════
+    resultChecks.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:#6b7280">⏳ 正在收集表单数据...</div>';
+
+    var formData = collectFormData();
+    var images = collectImages();
+    console.log('[Pipeline] Form data collected. Images:', images.length);
+
+    // ════════════════════════════════════════════════
+    // AI材料审核员 (Green): 材料预审
+    // ════════════════════════════════════════════════
+    var agent1Result;
+    try {
+      agent1Result = await runSubAgent1_Review(formData, images);
+      updateAgentUI(1, 'done', '预审完成 — ' + (agent1Result.summary || '').substring(0, 40));
+    } catch (e1) {
+      console.error('[AI材料审核员] Failed:', e1);
+      updateAgentUI(1, 'error', '预审失败: ' + e1.message);
+      throw e1;
+    }
+
+    // ════════════════════════════════════════════════
+    // AI审核结果评估专家 (Red): 置信度评估
+    // ════════════════════════════════════════════════
+    var agent2Result;
+    try {
+      agent2Result = await runSubAgent2_Confidence(agent1Result);
+      var confLabel = agent2Result.confidence === 'high' ? '高' :
+                      agent2Result.confidence === 'medium' ? '中' : '低';
+      updateAgentUI(2, 'done', '置信度: ' + confLabel + ' (' + (agent2Result.overallScore || '?') + '分)' +
+                     (agent2Result.retried ? ' [已重试]' : ''));
+    } catch (e2) {
+      console.error('[AI审核结果评估专家] Failed:', e2);
+      updateAgentUI(2, 'error', '评估失败: ' + e2.message);
+      // AI审核结果评估专家 失败不影响流程，使用 AI材料审核员 原始结果
+      agent2Result = { confidence: 'medium', finalResult: agent1Result, retried: false,
+                       scores: {}, overallScore: 50, finalSummary: agent1Result.summary };
+      updateAgentUI(2, 'done', '使用默认置信度 (降级)');
+    }
+
+    // ════════════════════════════════════════════════
+    // AI工商信息核对员 (Yellow): 企查查工商查询
+    // ════════════════════════════════════════════════
+    try {
+      var agent3Result = await runSubAgent3_QccQuery(formData.merchantName, formData.creditCode);
+      // 存储查询结果供 Tab3 使用
+      state.businessQueryResult = agent3Result;
+    } catch (e3) {
+      console.error('[AI工商信息核对员] Failed:', e3);
+      updateAgentUI(3, 'error', '查询失败: ' + e3.message);
+      // 非关键路径，失败不阻塞主流程
+      updateAgentUI(3, 'done', '查询跳过 (非关键)');
+    }
+
+    // ════════════════════════════════════════════════
+    // 消息触达机器人 (Purple): 推送通知
+    // ════════════════════════════════════════════════
+    try {
+      await runSubAgent4_Notify(agent2Result);
+      updateAgentUI(4, 'done', '通知模板已生成');
+    } catch (e4) {
+      console.error('[消息触达机器人] Failed:', e4);
+      updateAgentUI(4, 'error', '通知生成失败: ' + e4.message);
+      // 消息触达机器人 失败不影响主流程
+      updateAgentUI(4, 'done', '通知跳过 (非关键)');
+    }
+
+    // ════════════════════════════════════════════════
+    // 渲染最终结果
+    // ════════════════════════════════════════════════
+    var finalResult = agent2Result.finalResult;
+    var checks = finalResult.checks || [];
+    if (!Array.isArray(checks)) checks = [];
+
+    state.preReviewResult = finalResult;
+    state.confidenceResult = agent2Result;
+
+    var icons = { pass: '✅', warn: '⚠️', fail: '❌', info: '💡' };
+    var bgColors = { pass: '#f0fdf4', warn: '#fffbeb', fail: '#fef2f2', info: '#ecfeff' };
+    var borderColors = { pass: '#16a34a', warn: '#d97706', fail: '#dc2626', info: '#0891b2' };
+
+    var html = '<div style="font-size:11px;color:#6b7280;margin-bottom:8px;font-weight:500">📋 AI 预审结果</div>';
+
+    for (var i = 0; i < checks.length; i++) {
+      var c = checks[i];
+      var st = c.status || 'info';
+      html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;margin-bottom:6px;border-radius:8px;background:' +
+        (bgColors[st] || '#f5f5f5') + ';border-left:4px solid ' + (borderColors[st] || '#ccc') + '">';
+      html += '<span style="font-size:16px;flex-shrink:0">' + (icons[st] || '•') + '</span>';
+      html += '<div style="flex:1">';
+      html += '<div style="font-size:12px;font-weight:600;color:#1d1d1f">' + (c.dimension || '检查项') + '</div>';
+      html += '<div style="font-size:11px;color:#374151;margin-top:2px;line-height:1.4">' + (c.message || '') + '</div>';
+      if (c.details) {
+        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px;padding:4px 8px;background:rgba(0,0,0,0.03);border-radius:4px">' + c.details + '</div>';
+      }
+      html += '</div></div>';
+    }
+
+    if (finalResult.summary) {
+      html += '<div style="margin-top:8px;padding:10px 14px;background:#f8fafc;border-radius:6px;border:1px solid #e2e2e4">';
+      html += '<div style="font-size:10px;color:#6e6e73;font-weight:500;text-transform:uppercase;margin-bottom:4px">AI 总结</div>';
+      html += '<div style="font-size:12px;color:#1d1d1f;line-height:1.5">' + finalResult.summary + '</div>';
+      html += '</div>';
+    }
+
+    resultChecks.innerHTML = html;
+
+    // ── 在材料审核结果上方插入工商信息核对结果（不被覆盖）──
+    if (state.businessQueryResult) {
+      displayBusinessQueryResult(state.businessQueryResult);
+    }
+
+    // 判断整体状态
+    var hasFail = false;
+    for (var j = 0; j < checks.length; j++) {
+      if (checks[j].status === 'fail') hasFail = true;
+    }
+    var passed = !hasFail;
+    state.aiPassed = passed;
+
+    if (passed) {
+      resultTitle.innerHTML = '<span style="color:#16a34a;font-weight:700;font-size:14px">✅ AI 审核通过</span>';
+      resultSec.style.borderLeft = '5px solid #16a34a';
+      updateSubmitBtn('passed');
+    } else {
+      resultTitle.innerHTML = '<span style="color:#dc2626;font-weight:700;font-size:14px">❌ AI 审核未通过</span>';
+      resultSec.style.borderLeft = '5px solid #dc2626';
+      updateSubmitBtn('failed');
+    }
+
+    console.log('[Pipeline] ✅ ALL 4 AGENTS COMPLETE. Passed=' + passed);
+  } catch (e) {
+    console.error('[Pipeline] ❌ FATAL:', e.message);
+    resultTitle.innerHTML = '<span style="color:#dc2626;font-weight:700;font-size:14px">❌ 审核流水线出错</span>';
+    resultChecks.innerHTML = '<div style="padding:14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">' +
+      '<div style="color:#dc2626;font-size:13px;font-weight:500;margin-bottom:8px">⚠️ ' + e.message + '</div>' +
+      '<div style="margin-top:8px;text-align:right">' +
+      '<button onclick="runAgentPipeline()" style="padding:6px 14px;background:#dc2626;color:white;border:none;border-radius:6px;font-size:11px;cursor:pointer">🔄 重试审核流水线</button>' +
+      '</div></div>';
+    showToast('AI 审核失败', 'error');
+    state.aiPassed = false;
+    updateSubmitBtn('failed');
+
+  } finally {
+    state.isChecking = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SUBMIT BUTTON CLICK HANDLER
+// ═══════════════════════════════════════════════════════
+function handleSubmitClick() {
+  // 标记已提交审核，Tab3 才展示审核卡片
+  state.reviewSubmitted = true;
+
+  if (state.aiPassed) {
+    // AI 通过，直接提交
+    doFinalSubmit();
+  } else {
+    // AI 未通过，显示确认弹窗
+    const summary = state.preReviewResult ? (state.preReviewResult.summary || '') : '';
+    document.getElementById('submitConfirmDetail').textContent =
+      summary || 'AI 预审发现问题，建议修正后再提交。';
+    document.getElementById('submitConfirmModal').classList.add('open');
+  }
+}
+
+function closeSubmitConfirm() {
+  document.getElementById('submitConfirmModal').classList.remove('open');
+}
+
+function doFinalSubmit() {
+  document.getElementById('submitConfirmModal').classList.remove('open');
+  showToast('提交成功，正在流转至人工审核', 'success');
+  // 跳转到人工审核 Tab
+  setTimeout(() => switchTab('review'), 1200);
+}
+
+// ═══════════════════════════════════════════════════════
+// REVIEW TAB
+// ═══════════════════════════════════════════════════════
+function populateReviewTab(formData, preResult, confidenceData) {
+  const container = document.getElementById('reviewCombinedContent');
+  if (!container) return;
+
+  const typeLabels = { company: '单个公司/总公司', individual: '个体工商户' };
+  const cardLabels = { normal: '正常使用', deregistered: '已注销', unavailable: '未办理/无法使用' };
+  const licenseLabels = { active: '未注销', deregistered: '已注销' };
+  const bindLabels = { bound: '已绑卡', unbound: '未绑卡' };
+  const acctLabels = { bound_card: '绑定对公卡', legal_rep: '个人法人卡' };
+
+  let html = '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;color:#2563eb;margin-bottom:8px">📋 商家提交信息</div>';
+  html += '<div style="font-size:12px;color:#374151;line-height:1.8">';
+  html += '<p><strong>商家名称：</strong>' + formData.merchantName + '</p>';
+  html += '<p><strong>信用代码：</strong>' + formData.creditCode + '</p>';
+  html += '<p><strong>绑卡状态：</strong>' + (bindLabels[formData.bindStatus] || formData.bindStatus) + '</p>';
+  html += '<p><strong>商家类型：</strong>' + (typeLabels[formData.merchantType] || formData.merchantType) + '</p>';
+  html += '<p><strong>经营资质：</strong>' + (licenseLabels[formData.licenseStatus] || formData.licenseStatus) + '</p>';
+  html += '<p><strong>对公卡状态：</strong>' + (cardLabels[formData.cardStatus] || formData.cardStatus) + '</p>';
+  html += '<p><strong>退保金额（可退余额）：</strong>¥' + formData.refundAmount.toFixed(2) + '</p>';
+  html += '<p><strong>收款账户：</strong>' + (acctLabels[formData.accountType] || formData.accountType) + ' (' + formData.bankCard.slice(-4) + ')</p>';
+  html += '<p><strong>开户行：</strong>' + formData.bankName + '</p>';
+  html += '<p style="margin-top:4px"><strong>材料：</strong> ';
+  html += formData.materials.cert ? '✅ 营业执照注销证明' : '❌ 营业执照注销证明';
+  html += formData.materials.letter ? ' ✅ 退款申请函' : ' ❌ 退款申请函';
+  html += '</p></div></div>';
+
+  // 分隔线
+  html += '<div style="border-top:1px dashed #e5e7eb;margin:10px 0"></div>';
+
+  // AI 审核意见区域
+  html += '<div><div style="font-size:13px;font-weight:600;color:#2563eb;margin-bottom:8px">🤖 AI 审核意见</div>';
+
+  if (preResult.checks) {
+    html += '<div style="font-size:12px">';
+    preResult.checks.forEach(function(c) {
+      var icon = c.status === 'pass' ? '✅' : c.status === 'warn' ? '⚠️' : '❌';
+      var rowClass = c.status === 'fail' ? 'style="color:#dc2626"' : '';
+      html += '<div class="opinion-row opinion-' + c.status + '" ' + rowClass + '>' + icon + ' <strong>' + c.dimension + '</strong>: ';
+      if (c.status === 'fail') {
+        html += '<span class="review-highlight">' + c.message + '</span>';
+      } else {
+        html += c.message;
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // 置信度评估
+  if (confidenceData && confidenceData.confidence) {
+    var confLevel = confidenceData.confidence;
+    var confLabel = confLevel === 'high' ? '高' : confLevel === 'medium' ? '中' : '低';
+    var confColor = confLevel === 'high' ? '#16a34a' : confLevel === 'medium' ? '#d97706' : '#dc2626';
+    var confEmoji = confLevel === 'high' ? '🟢' : confLevel === 'medium' ? '🟡' : '🔴';
+    var scores = confidenceData.scores || {};
+    var retriedTag = confidenceData.retried ? ' <span style="font-size:9px;background:#fef2f2;color:#dc2626;padding:1px 5px;border-radius:4px">已重审</span>' : '';
+
+    html += '<div style="margin-top:8px;padding:10px 14px;border-radius:8px;border:1px solid ' + confColor + ';background:' + (confLevel === 'high' ? '#f0fdf4' : confLevel === 'medium' ? '#fffbeb' : '#fef2f2') + '">';
+    html += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;color:' + confColor + '">' + confEmoji + ' AI审核置信度：<span style="font-weight:700">' + confLabel + '</span>' + retriedTag + '</div>';
+    html += '<div style="font-size:11px;color:#1d1d1f;line-height:1.6">';
+    html += '综合评分：<strong>' + (confidenceData.overallScore || '?') + '</strong> / 100';
+    if (scores.materialTypeAccuracy) {
+      html += '<br>📄 材料类型识别：<strong>' + scores.materialTypeAccuracy.score + '</strong>分 — ' + (scores.materialTypeAccuracy.comment || '');
+    }
+    if (scores.keywordExtractionAccuracy) {
+      html += '<br>🔍 关键字提取：<strong>' + scores.keywordExtractionAccuracy.score + '</strong>分 — ' + (scores.keywordExtractionAccuracy.comment || '');
+    }
+    if (scores.complianceAssessmentAccuracy) {
+      html += '<br>📋 合规评估：<strong>' + scores.complianceAssessmentAccuracy.score + '</strong>分 — ' + (scores.complianceAssessmentAccuracy.comment || '');
+    }
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+
+  // ── 企查查工商信息查询结果（四场景 AI 复核结论）──
+  if (state.businessQueryResult) {
+    var qr = state.businessQueryResult;
+    var ci = qr._compatInfo || {};
+    var isMatch = (ci.isMatch !== undefined) ? ci.isMatch : ci.licenseMatch;
+    var mainText = ci.mainText || '';
+    var cardColor = ci.cardColor || '#6b7280';
+    var cardBg = (isMatch === true) ? 'rgba(22,163,74,0.08)' :
+                 (isMatch === false) ? 'rgba(220,38,38,0.06)' : 'rgba(107,114,128,0.05)';
+
+    html += '<div style="border-top:1px dashed #e5e7eb;margin:10px 0"></div>';
+    html += '<div><div style="font-size:13px;font-weight:600;color:#7c3aed;margin-bottom:8px">🔍 AI工商信息核对（企查查）</div>';
+
+    // AI 复核结论卡片（与 Tab1 格式一致）
+    html += '<div style="padding:12px 14px;border-radius:8px;border:1.5px solid ' + cardColor + ';background:' + cardBg + '">';
+
+    if (mainText) {
+      var innerBg = isMatch === true ? 'rgba(22,163,74,0.1)' : isMatch === false ? 'rgba(220,38,38,0.08)' : 'rgba(107,114,128,0.06)';
+      html += '<div style="padding:8px 12px;border-radius:6px;background:' +
+        innerBg +
+        ';border-left:3px solid ' + cardColor + ';margin-bottom:8px">';
+      html += '<div style="font-size:13px;font-weight:600;color:' + cardColor + ';line-height:1.5">';
+      html += mainText;
+      html += '</div></div>';
+    }
+
+    // 详情
+    var actualStatusText = qr.isDeregistered === true ? '已注销' :
+                           qr.isDeregistered === false ? '未注销（在营）' : '未知';
+    var claimedText = (ci.formLicenseVal === 'deregistered') ? '已注销' : '未注销';
+
+    html += '<div style="font-size:11px;color:#374151;line-height:1.7">';
+    html += '<div><strong>商家名称：</strong>' + (qr.merchantName || formData.merchantName) + '</div>';
+    html += '<div><strong>信用代码：</strong>' + (qr.creditCode || formData.creditCode || '—') + '</div>';
+    if (qr.legalRep) {
+      html += '<div><strong>法定代表人：</strong>' + qr.legalRep + '</div>';
+    }
+    // 比对摘要
+    html += '<div style="display:flex;gap:8px;margin-top:4px;padding:6px 8px;border-radius:4px;background:rgba(0,0,0,0.02)">';
+    html += '<span>填报：<b>' + claimedText + '</b></span>';
+    html += '<span style="color:#9ca3af">→</span>';
+    html += '<span>实况：<b style="color:' + cardColor + '">' + actualStatusText + '</b></span>';
+    html += '<span style="color:#9ca3af">|</span>';
+    html += '<span style="font-weight:700;' + (isMatch ? 'color:#16a34a' : isMatch === false ? 'color:#dc2626' : '') + '">' +
+      (isMatch ? '✅ 一致' : isMatch === false ? '❌ 不一致' : '—') + '</span>';
+    html += '</div>';
+    html += '</div>'; // end details
+    html += '</div>'; // end card
+    html += '</div>'; // end section
+  }
+
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// APPROVE / REJECT — v20260630a: 通过仅Toast，驳回记录到流程失败通知
+// ═══════════════════════════════════════════════════════
+async function handleApprove() {
+  if (!state.preReviewResult) {
+    showToast('请先在"商家提交"页面执行 AI 预审', 'error');
+    return;
+  }
+  showToast('操作成功', 'success');
+}
+
+function handleReject() {
+  if (!state.preReviewResult) {
+    showToast('请先在"商家提交"页面执行 AI 预审', 'error');
+    return;
+  }
+
+  const merchantName = document.getElementById('f-merchantName').value || '星辰科技有限公司';
+  const review = state.preReviewResult;
+  const failChecks = (review.checks || []).filter(function(c) { return c.status === 'fail'; });
+  const mainIssue = failChecks.length > 0 ? failChecks[0] : (review.checks || [])[0];
+
+  const rejectData = {
+    verdict: 'fail',
+    rejectReason: {
+      category: '人工审核驳回',
+      subCategory: mainIssue ? mainIssue.dimension : '材料不合规',
+      detail: mainIssue ? mainIssue.message : '提交信息不符合审核规则'
+    }
+  };
+
+  pushFeishuCard('reject', { merchantName: merchantName, refundAmount: getRefundAmount() }, rejectData);
+  addDailyRecord({
+    result: 'reject',
+    merchantName: merchantName,
+    amount: getRefundAmount(),
+    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+    reasonCategory: (rejectData.rejectReason && rejectData.rejectReason.subCategory) || '材料不合规',
+    rejectReason: rejectData.rejectReason
+  });
+  showToast('已驳回，流程失败通知已生成', 'error');
+}
+
+
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('open');
+  document.getElementById('s-apikey').value = localStorage.getItem(STORAGE_API_KEY) || '';
+  document.getElementById('s-model').value = localStorage.getItem(STORAGE_MODEL) || DEFAULT_MODEL;
+  document.getElementById('settingsResult').innerHTML = '';
+  updateAiStatus();
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+function saveSettings() {
+  const apiKey = document.getElementById('s-apikey').value.trim();
+  const model = document.getElementById('s-model').value;
+
+  if (apiKey) localStorage.setItem(STORAGE_API_KEY, apiKey);
+  localStorage.setItem(STORAGE_MODEL, model);
+
+  updateAiStatus();
+  closeSettings();
+  showToast('设置已保存', 'success');
+}
+
+async function testConnection() {
+  const apiKey = document.getElementById('s-apikey').value.trim();
+  if (!apiKey) {
+    document.getElementById('settingsResult').innerHTML = '<span style="color:var(--danger)">请输入 API Key</span>';
+    return;
+  }
+
+  document.getElementById('settingsResult').innerHTML = '正在连接...';
+
+  try {
+    const body = {
+      provider: 'qwen',
+      apiKey: apiKey,
+      body: {
+        model: document.getElementById('s-model').value || DEFAULT_MODEL,
+        messages: [{ role: 'user', content: 'hi' }],
+        max_tokens: 10,
+        stream: false
+      }
+    };
+
+    const result = await _postViaIframe('/api/chat', body);
+
+    if (result.status === 200) {
+      document.getElementById('settingsResult').innerHTML = '<span style="color:var(--success)">✅ 连接成功！通义千问 API 正常工作</span>';
+    } else {
+      const err = result.body?.error?.message || '未知错误';
+      document.getElementById('settingsResult').innerHTML = '<span style="color:var(--danger)">❌ ' + err + '</span>';
+    }
+  } catch (e) {
+    document.getElementById('settingsResult').innerHTML = '<span style="color:var(--danger)">❌ ' + e.message + '</span>';
+  }
+}
+
+function updateAiStatus() {
+  const badge = document.getElementById('aiStatus');
+  const apiKey = localStorage.getItem(STORAGE_API_KEY);
+  if (apiKey && apiKey.length > 10) {
+    badge.textContent = 'AI 已连接';
+    badge.className = 'badge badge-active';
+  } else {
+    badge.textContent = 'AI 未连接';
+    badge.className = 'badge badge-inactive';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function switchTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+
+  const tabs = document.querySelectorAll('.tab');
+  const tabMap = { 'scenario': 0, 'submit': 1, 'review': 2, 'feishu': 3, 'summary': 4 };
+  if (tabs[tabMap[tabName]]) tabs[tabMap[tabName]].classList.add('active');
+
+  // Scroll content to top
+  document.querySelector('.content').scrollTop = 0;
+
+  if (tabName === 'review' && state.preReviewResult) {
+    const formData = {
+      merchantName: document.getElementById('f-merchantName').value,
+      creditCode: document.getElementById('f-creditCode').value,
+      bindStatus: document.getElementById('f-bindStatus').value,
+      merchantType: document.getElementById('f-merchantType').value,
+      licenseStatus: document.getElementById('f-licenseStatus').value,
+      cardStatus: document.getElementById('f-cardStatus').value,
+      refundAmount: getRefundAmount(),
+      balance: getBalanceAmount(),
+      accountType: document.getElementById('f-accountType').value,
+      bankCard: document.getElementById('f-bankCard').value,
+      bankName: document.getElementById('f-bankName').value,
+      materials: getMaterialStatus(),
+      signatures: { legal: false, shareholders: false, seal: false, fingerprint: false }
+    };
+    if (state.reviewSubmitted) {
+      populateReviewTab(formData, state.preReviewResult, state.confidenceResult);
+    }
+  }
+
+  if (tabName === 'summary') {
+    renderDailyRecordsList();
+    // 如果已有汇总结果，显示
+    if (state._lastSummaryHtml) {
+      var preview = document.getElementById('summaryCardPreview');
+      var container = document.getElementById('summaryCardContainer');
+      if (preview) preview.innerHTML = state._lastSummaryHtml;
+      if (container) container.style.display = 'block';
+    }
+  }
+}
+
+function showToast(message, type) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = 'toast ' + (type || 'success');
+  toast.style.display = 'block';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => { toast.style.display = 'none'; }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+// 页面版本标识（每次刷新可见）
+document.addEventListener('DOMContentLoaded', function() {
+  var t = document.getElementById('pageTitle');
+  if (t) t.innerHTML = '商家退保 AI 审核 <span style="font-size:11px;color:var(--text-tertiary);font-weight:400">v20260630e</span>';
+
+  // ── 强制清除残留状态（防止刷新后状态卡死）──
+  state.isChecking = false;
+  state.aiPassed = false;
+  state.preReviewResult = null;
+  state.confidenceResult = null;
+  var btn = document.getElementById('btnSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = '提交审核'; btn.className = 'btn btn-primary'; }
+  var resultSec = document.getElementById('aiResultSection');
+  if (resultSec) resultSec.style.display = 'none';
+
+  // 初始化经营资质 radio 提示文字
+});
+updateAiStatus();
+
+// ═════════════════════════════════════════════════════
+// 流程失败通知 — 动态生成飞书卡片（推送至同一群）
+// ═════════════════════════════════════════════════════
+
+/**
+ * 依据人审结果，生成「流程失败通知」卡片，插入 tab-feishu 动态区域
+ * 打款失败和审核驳回均推送到同一个群：「商家退保审批群」
+ */
+function pushFeishuCard(type, formData, reviewResult) {
+  var container = document.getElementById('feishuCardsContainer');
+  if (!container) return;
+
+  var now = new Date().toLocaleString('zh-CN', { hour12: false });
+  var merchantName = (formData && formData.merchantName) || '未知商家';
+  var amount = (formData && formData.refundAmount) ? formData.refundAmount : getRefundAmount();
+  var orderNo = 'MB-' + Date.now().toString(36).toUpperCase();
+
+  var cardHeader = '';
+  var cardBody = '';
+  var cardFooter = '';
+
+  if (type === 'reject') {
+    var reason = (reviewResult && reviewResult.rejectReason) || {};
+    cardHeader = '流程失败通知（商家退保审批群） - 审核驳回';
+    cardBody =
+      '<div class="fc-row">审批单号：' + orderNo + '</div>' +
+      '<div class="fc-row">商家名称：' + merchantName + '</div>' +
+      '<div class="fc-row">退保金额：¥' + parseFloat(amount).toFixed(2) + '</div>' +
+      '<div class="fc-row">驳回时间：' + now + '</div>' +
+      '<div class="fc-row" style="margin-top:8px"><strong>驳回原因：</strong><span class="fc-highlight">' + (reason.category || '人工审核驳回') + ' > ' + (reason.subCategory || '材料不合规') + '</span></div>' +
+      '<div class="fc-row"><strong>具体原因：</strong>' + (reason.detail || '提交信息不符合规则要求') + '</div>' +
+      '<div class="fc-row" style="margin-top:8px;background:#f5f6f8;padding:8px;border-radius:4px">' +
+        '<strong>AI 问题解析：</strong>' + ((reviewResult && reviewResult.summary) || '根据退保审核规则，该商家提交的材料存在不合规问题。建议补充相关材料后重新提交。') +
+      '</div>';
+    cardFooter =
+      '<button class="fc-btn primary">查看完整审批记录</button>' +
+      '<button class="fc-btn">联系商家</button>';
+
+  } else if (type === 'payment_failed') {
+    cardHeader = '流程失败通知（商家退保审批群） - 打款失败';
+    cardBody =
+      '<div class="fc-row">审批单号：' + orderNo + '</div>' +
+      '<div class="fc-row">商家名称：' + merchantName + '</div>' +
+      '<div class="fc-row">退保金额：¥' + parseFloat(amount).toFixed(2) + '</div>' +
+      '<div class="fc-row">失败时间：' + now + '</div>' +
+      '<div class="fc-row" style="margin-top:8px"><strong>失败原因：</strong><span class="fc-highlight">财经打款失败 > 银行卡信息错误</span></div>' +
+      '<div class="fc-row"><strong>具体原因：</strong>开户行信息与银行卡号不匹配</div>' +
+      '<div class="fc-row" style="margin-top:8px;background:#f5f6f8;padding:8px;border-radius:4px">' +
+        '<strong>AI 解析：</strong>提交账户开户行为"' + ((formData && formData.bankName) || '未知') + '"，但银行卡号(' + ((formData && formData.bankCard) || '未知') + ')与开户行不匹配，导致打款失败。' +
+      '</div>';
+    cardFooter =
+      '<button class="fc-btn primary">修改账户信息</button>' +
+      '<button class="fc-btn">联系商家</button>';
+
+  } else if (type === 'approve') {
+    cardHeader = '流程失败通知（商家退保审批群） - 审核通过';
+    cardBody =
+      '<div class="fc-row">审批单号：' + orderNo + '</div>' +
+      '<div class="fc-row">商家名称：' + merchantName + '</div>' +
+      '<div class="fc-row">退保金额：¥' + parseFloat(amount).toFixed(2) + '</div>' +
+      '<div class="fc-row">通过时间：' + now + '</div>' +
+      '<div class="fc-row" style="margin-top:8px;color:var(--success)"><strong>审核结果：</strong>已通过，等待打款</div>';
+    cardFooter =
+      '<button class="fc-btn primary">查看审批记录</button>';
+  }
+
+  var cardHtml =
+    '<div class="card" style="margin-bottom:12px" data-type="' + type + '">' +
+      '<div class="card-title" style="margin-bottom:10px;font-size:12px;color:var(--text-tertiary)">' + (type === 'reject' ? '审核驳回通知' : (type === 'payment_failed' ? '打款失败通知' : '审核通过通知')) + '（商家退保审批群）</div>' +
+      '<div class="feishu-card">' +
+        '<div class="feishu-card-header">' + cardHeader + '</div>' +
+        '<div class="feishu-card-body">' + cardBody + '</div>' +
+        '<div class="feishu-card-footer">' + cardFooter + '</div>' +
+      '</div>' +
+    '</div>';
+
+  container.insertAdjacentHTML('beforeend', cardHtml);
+  console.log('[pushFeishuCard] Pushed type=' + type + ' to 商家退保审批群');
+}
+
+// ── 注释：以下为多群推送逻辑（保留代码，按需启用）──
+/*
+async function pushToMultipleGroups(cardData) {
+  // 审核驳回 → 推送至「客服群」
+  await pushToFeishuGroup(cardData, '客服群-webhook-key');
+  // 打款失败 → 推送至「财务群」
+  if (cardData.type === 'payment_failed') {
+    await pushToFeishuGroup(cardData, '财务群-webhook-key');
+  }
+}
+async function pushToFeishuGroup(cardData, webhookKey) {
+  // 真实推送实现（当前注释掉，仅保留逻辑）
+  // const payload = buildFeishuCardPayload(cardData);
+  // await fetch('https://open.feishu.cn/open-apis/bot/v2/card/update', {
+  //   method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  // });
+}
+*/
+
+
+// ═════════════════════════════════════════════════════
+// 当日审批记录管理
+// ═════════════════════════════════════════════════════
+
+function addDailyRecord(record) {
+  state.dailyRecords.push(record);
+  renderDailyRecordsList();
+
+  // 人审完成后，延迟 N ms 触发汇总（默认 10s）
+  if (state.summaryTimer) clearTimeout(state.summaryTimer);
+  state.summaryTimer = setTimeout(function() {
+    triggerSummaryNow();
+  }, state.summaryDelayMs);
+
+  console.log('[addDailyRecord] Added record, total=', state.dailyRecords.length, 'triggering summary in', state.summaryDelayMs, 'ms');
+}
+
+function renderDailyRecordsList() {
+  var listEl = document.getElementById('dailyRecordsList');
+  if (!listEl) return;
+
+  if (state.dailyRecords.length === 0) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);padding:20px;text-align:center">暂无记录，人审完成后自动录入</div>';
+    return;
+  }
+
+  var html = '<div style="font-size:12px">';
+  for (var i = 0; i < state.dailyRecords.length; i++) {
+    var r = state.dailyRecords[i];
+    var badgeClass = r.result === 'approve' ? 'tag-auto' : (r.result === 'reject' ? 'tag-danger' : 'tag-review');
+    var badgeText = r.result === 'approve' ? '✅ 通过' : (r.result === 'reject' ? '❌ 驳回' : '⚠️ 打款失败');
+    html +=
+      '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px">' +
+        '<span class="tag ' + badgeClass + '">' + badgeText + '</span>' +
+        '<span style="color:var(--text)">' + (r.merchantName || '未知') + '</span>' +
+        '<span style="color:var(--text-tertiary);font-size:11px">¥' + parseFloat(r.amount || 0).toFixed(2) + '</span>' +
+        '<span style="color:var(--text-tertiary);font-size:11px">' + (r.time || '') + '</span>' +
+      '</div>';
+  }
+  html += '</div>';
+  listEl.innerHTML = html;
+}
+
+function clearDailyRecords() {
+  state.dailyRecords = [];
+  renderDailyRecordsList();
+  var summaryContainer = document.getElementById('summaryCardContainer');
+  if (summaryContainer) summaryContainer.style.display = 'none';
+  showToast('当日记录已清空', 'success');
+}
+
+
+// ═════════════════════════════════════════════════════
+// 当日审批汇总
+// ═════════════════════════════════════════════════════
+
+function triggerSummaryNow() {
+  if (state.dailyRecords.length === 0) {
+    showToast('暂无审批记录，无法生成汇总', 'error');
+    return;
+  }
+
+  var total = state.dailyRecords.length;
+  var approveCount = 0, rejectCount = 0, failCount = 0;
+  var rejectReasons = {};
+  var failReasons = {};
+
+  for (var i = 0; i < total; i++) {
+    var r = state.dailyRecords[i];
+    if (r.result === 'approve') approveCount++;
+    else if (r.result === 'reject') {
+      rejectCount++;
+      var key = (r.reasonCategory || '材料不合规');
+      rejectReasons[key] = (rejectReasons[key] || 0) + 1;
+    } else if (r.result === 'payment_failed') {
+      failCount++;
+      var fkey = (r.reasonCategory || '银行卡信息错误');
+      failReasons[fkey] = (failReasons[fkey] || 0) + 1;
+    }
+  }
+
+  var dateStr = new Date().toLocaleDateString('zh-CN');
+  var summaryBody =
+    '<div class="fc-row"><strong>汇总日期：</strong>' + dateStr + '</div>' +
+    '<div class="fc-row"><strong>总审批数：</strong>' + total + ' 笔</div>' +
+    '<div class="fc-row"><strong>审核通过：</strong><span style="color:var(--success)">' + approveCount + ' 笔</span></div>' +
+    '<div class="fc-row"><strong>审核驳回：</strong><span style="color:var(--danger)">' + rejectCount + ' 笔</span></div>' +
+    '<div class="fc-row"><strong>打款失败：</strong><span style="color:var(--warning)">' + failCount + ' 笔</span></div>';
+
+  if (rejectCount > 0) {
+    summaryBody += '<div class="fc-row" style="margin-top:8px"><strong>驳回原因汇总：</strong></div>';
+    Object.keys(rejectReasons).forEach(function(k) {
+      summaryBody += '<div class="fc-row" style="padding-left:12px;font-size:11px">' + k + '：' + rejectReasons[k] + ' 笔</div>';
+    });
+  }
+  if (failCount > 0) {
+    summaryBody += '<div class="fc-row" style="margin-top:8px"><strong>打款失败原因汇总：</strong></div>';
+    Object.keys(failReasons).forEach(function(k) {
+      summaryBody += '<div class="fc-row" style="padding-left:12px;font-size:11px">' + k + '：' + failReasons[k] + ' 笔</div>';
+    });
+  }
+
+  summaryBody += '<div class="fc-row" style="margin-top:10px;background:#f5f6f8;padding:8px;border-radius:4px;font-size:11px"><strong>AI 建议：</strong> ' +
+    (rejectCount > 0 ? '今日驳回率 ' + Math.round(rejectCount / total * 100) + '%，建议重点跟进「' + (Object.keys(rejectReasons)[0] || '') + '」类问题；' : '') +
+    (failCount > 0 ? ' 打款失败 ' + failCount + ' 笔，建议联系财务确认银行卡信息录入规范。' : '') +
+    (approveCount === total ? ' 今日审批全部通过，打款流程正常运行。' : '') +
+    '</div>';
+
+  var cardHtml =
+    '<div class="feishu-card">' +
+      '<div class="feishu-card-header">📊 当日审批汇总 - ' + dateStr + '</div>' +
+      '<div class="feishu-card-body">' + summaryBody + '</div>' +
+      '<div class="feishu-card-footer">' +
+        '<button class="fc-btn primary">查看完整汇总报告</button>' +
+        '<button class="fc-btn">导出报表</button>' +
+      '</div>' +
+    '</div>';
+
+  var preview = document.getElementById('summaryCardPreview');
+  var container = document.getElementById('summaryCardContainer');
+  if (preview) preview.innerHTML = cardHtml;
+  if (container) container.style.display = 'block';
+  // 保存汇总卡片 HTML，供 tab 切换时恢复
+  state._lastSummaryHtml = cardHtml;
+
+  showToast('当日审批汇总已生成', 'success');
+  console.log('[triggerSummaryNow] Summary generated, records=', total);
+}
+
+// ── 每日定时汇总（北京时间 22:00）
+function scheduleDailySummary() {
+  function msUntil22() {
+    var now = new Date();
+    var beijingOffset = 8 * 60;
+    var localOffset = now.getTimezoneOffset();
+    var diffMinutes = beijingOffset + localOffset;
+    var beijingNow = new Date(now.getTime() + diffMinutes * 60 * 1000);
+
+    var target = new Date(beijingNow);
+    target.setHours(22, 0, 0, 0);
+
+    if (target.getTime() <= beijingNow.getTime()) {
+      target.setDate(target.getDate() + 1);
+    }
+    return target.getTime() - beijingNow.getTime();
+  }
+
+  var ms = msUntil22();
+  console.log('[scheduleDailySummary] Next summary in', Math.round(ms / 1000 / 60), 'minutes');
+
+  setTimeout(function() {
+    triggerSummaryNow();
+    setInterval(function() {
+      triggerSummaryNow();
+    }, 24 * 60 * 60 * 1000);
+  }, ms);
+}
+
+// 页面加载时启动定时汇总
+scheduleDailySummary();
+
+
+// Pre-select scenario defaults
+document.querySelector('#tree-bindcard [data-key="bound"]').classList.add('selected');
+state.scenario.bind = 'bound';
+document.querySelector('#tree-type [data-key="company"]').classList.add('selected');
+state.scenario.type = 'company';
+document.querySelector('#tree-license [data-key="deregistered"]').classList.add('selected');
+state.scenario.license = 'deregistered';
+document.querySelector('#tree-card [data-key="deregistered"]').classList.add('selected');
+state.scenario.card = 'deregistered';
+updateScenarioResult();
+</script>
+</body>
+</html>
